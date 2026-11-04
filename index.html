@@ -56,6 +56,24 @@
       for (var di = 0; di < 12; di++) game.done[di] = di % 3 === 0 ? 2 : 3;
     }
     if (q.get('ghost') === '1') game.levelStartAt -= 12;
+    if (q.has('qi') && game.level().kind === 'quiz') {
+      var lvq = game.level(), qi0 = parseInt(q.get('qi'), 10) || 0;
+      game.quizQi = Math.max(0, Math.min(lvq.qs.length - 1, qi0));
+    }
+    if (q.get('bad') === '1' && game.level().kind === 'quiz') {
+      var lvb = game.level(), qb = lvb.qs[game.quizQi];
+      game.answerQuiz((qb.ans + 1) % qb.opts.length);
+      game.t += 0.6; game.qFlash.at += 0.6;
+    }
+    if (q.get('good') === '1' && game.level().kind === 'quiz') {
+      var lvg = game.level(), qg = lvg.qs[game.quizQi];
+      game.answerQuiz(qg.ans);
+      game.t += 0.15; game.qFlash.at += 0.15;
+    }
+    if (q.has('c') && game.level().kind === 'seg') {
+      var lvx = game.level(), cv2 = parseFloat(q.get('c'));
+      if (!isNaN(cv2)) game.c = Math.max(lvx.a + 0.5, Math.min(lvx.b - 0.5, cv2));
+    }
     if (q.get('solve') === '1') {
       game.autoSolve();
       var want = parseInt(q.get('stars') || '3', 10);
