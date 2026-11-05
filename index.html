@@ -3,132 +3,127 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>绝对距离 · 数轴解谜</title>
+<title>数学小游戏 · 主页</title>
 <style>
-  html, body {
-    margin: 0; padding: 0; height: 100%;
-    background: #EAE4D6;
-    overflow: hidden;
-    -webkit-tap-highlight-color: transparent;
+  :root {
+    --bg: #EAE4D6;
+    --page: #F7F3EA;
+    --card: #FFFDF8;
+    --ink: #2B2A26;
+    --ink2: #6B6760;
+    --ink3: #A9A294;
+    --rule: #DCD5C6;
+    --teal: #1D9E75;
+    --teal-bg: #E1F5EE;
+    --amber: #C4872B;
   }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); }
+  body { -webkit-tap-highlight-color: transparent; }
   #stage {
-    position: relative;
-    width: 100%;
-    height: 100%;
+    min-height: 100%;
     max-width: 420px;
     margin: 0 auto;
-    background: #F7F3EA;
-    overflow: hidden;
-    touch-action: none;
+    background: var(--page);
+    padding: 34px 24px 40px;
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    color: var(--ink);
   }
-  #cv { display: block; width: 100%; height: 100%; touch-action: none; }
+  .title { text-align: center; font-size: 27px; font-weight: 600; margin: 0; letter-spacing: 1px; }
+  .subtitle { text-align: center; font-size: 11.5px; color: var(--ink3); margin: 10px 0 26px; }
+  .grid { display: flex; flex-direction: column; gap: 14px; }
+  a.gcard {
+    display: block;
+    text-decoration: none;
+    color: var(--ink);
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 18px;
+    padding: 18px 18px 16px;
+    transition: transform .08s ease;
+  }
+  a.gcard:active { transform: scale(0.985); }
+  .gcard .head { display: flex; align-items: center; gap: 14px; }
+  .gcard svg { flex: 0 0 96px; }
+  .gcard .name { font-size: 19px; font-weight: 600; }
+  .gcard .desc { font-size: 11.5px; color: var(--ink3); margin-top: 5px; }
+  .gcard .meta { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+  .gcard .count { font-size: 10.5px; color: var(--ink3); }
+  .gcard .go {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 12.5px; font-weight: 500; color: var(--teal);
+    background: var(--teal-bg);
+    border-radius: 15px;
+    padding: 6px 14px;
+  }
+  .badge-new {
+    display: inline-block; vertical-align: 3px;
+    margin-left: 8px; padding: 1px 7px;
+    font-size: 9.5px; font-weight: 500; color: var(--amber);
+    background: #FAEEDA; border-radius: 8px;
+  }
+  .foot { text-align: center; font-size: 10.5px; color: var(--ink3); margin-top: 26px; }
 </style>
 </head>
 <body>
-<div id="stage"><canvas id="cv"></canvas></div>
-<script src="engine.js"></script>
-<script>
-(function () {
-  var stage = document.getElementById('stage');
-  var cv = document.getElementById('cv');
-  var ctx = cv.getContext('2d');
-  var game = new BoundGame(ctx);
-  var dpr = Math.min(window.devicePixelRatio || 1, 3);
+<div id="stage">
+  <h1 class="title">数学小游戏</h1>
+  <p class="subtitle">数轴 · 角 · 逐步推理</p>
 
-  function resize() {
-    var r = stage.getBoundingClientRect();
-    dpr = Math.min(window.devicePixelRatio || 1, 3);
-    cv.width = Math.round(r.width * dpr);
-    cv.height = Math.round(r.height * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    game.resize(r.width, r.height);
-  }
+  <div class="grid">
 
-  window.addEventListener('resize', resize);
-  window.addEventListener('orientationchange', function () { setTimeout(resize, 120); });
-  resize();
+    <a class="gcard" href="abs/index.html">
+      <div class="head">
+        <svg width="96" height="64" viewBox="0 0 96 64" aria-hidden="true">
+          <line x1="8" y1="44" x2="88" y2="44" stroke="#C4BCA8" stroke-width="1.6"/>
+          <path d="M8 44 l7 -3.4 v6.8 Z" fill="#C4BCA8"/>
+          <path d="M88 44 l-7 -3.4 v6.8 Z" fill="#C4BCA8"/>
+          <line x1="24" y1="48" x2="24" y2="40" stroke="#C4BCA8" stroke-width="1.2"/>
+          <line x1="48" y1="48" x2="48" y2="40" stroke="#C4BCA8" stroke-width="1.2"/>
+          <line x1="72" y1="48" x2="72" y2="40" stroke="#C4BCA8" stroke-width="1.2"/>
+          <circle cx="24" cy="44" r="6.5" fill="#FFFDF8" stroke="#1D9E75" stroke-width="2"/>
+          <circle cx="72" cy="44" r="6.5" fill="#FFFDF8" stroke="#1D9E75" stroke-width="2"/>
+          <path d="M24 54 Q48 62 72 54" fill="none" stroke="#C4872B" stroke-width="1.6"/>
+          <text x="48" y="63" text-anchor="middle" font-size="8" fill="#6B6760">|a − b|</text>
+        </svg>
+        <div>
+          <div class="name">绝对距离</div>
+          <div class="desc">数轴上的点 · 线段与动点 · 绝对值化简</div>
+        </div>
+      </div>
+      <div class="meta">
+        <span class="count">12 章 · 48 关</span>
+        <span class="go">进入 ›</span>
+      </div>
+    </a>
 
-  // 仅供测试的地址参数：?level=5&solve=1
-  try {
-    var q = new URLSearchParams(location.search);
-    if (q.has('level')) game.loadLevel(parseInt(q.get('level'), 10) || 0);
-    if (q.get('done') === '1') {
-      for (var di = 0; di < 12; di++) game.done[di] = di % 3 === 0 ? 2 : 3;
-    }
-    if (q.get('ghost') === '1') game.levelStartAt -= 12;
-    if (q.has('qi') && game.level().kind === 'quiz') {
-      var lvq = game.level(), qi0 = parseInt(q.get('qi'), 10) || 0;
-      game.quizQi = Math.max(0, Math.min(lvq.qs.length - 1, qi0));
-    }
-    if (q.get('bad') === '1' && game.level().kind === 'quiz') {
-      var lvb = game.level(), qb = lvb.qs[game.quizQi];
-      game.answerQuiz((qb.ans + 1) % qb.opts.length);
-      game.t += 0.6; game.qFlash.at += 0.6;
-    }
-    if (q.get('good') === '1' && game.level().kind === 'quiz') {
-      var lvg = game.level(), qg = lvg.qs[game.quizQi];
-      game.answerQuiz(qg.ans);
-      game.t += 0.15; game.qFlash.at += 0.15;
-    }
-    if (q.has('c') && game.level().kind === 'seg') {
-      var lvx = game.level(), cv2 = parseFloat(q.get('c'));
-      if (!isNaN(cv2)) game.c = Math.max(lvx.a + 0.5, Math.min(lvx.b - 0.5, cv2));
-    }
-    if (q.get('solve') === '1') {
-      game.autoSolve();
-      var want = parseInt(q.get('stars') || '3', 10);
-      game.drags = want === 1 ? 9 : (want === 2 ? 2 : 0);
-      game.solvedAt = want === 3 ? game.levelStartAt + 1 : game.levelStartAt + 12;
-      game.overlayAt = game.solvedAt;
-      game.t = game.solvedAt + 2;
-    }
-  } catch (e) {}
+    <a class="gcard" href="angle/index.html">
+      <div class="head">
+        <svg width="96" height="64" viewBox="0 0 96 64" aria-hidden="true">
+          <path d="M84 52 A64 64 0 0 0 20 16" fill="none" stroke="#CFC6B2" stroke-width="1.4" stroke-dasharray="3 3"/>
+          <line x1="20" y1="52" x2="84" y2="52" stroke="#2B2A26" stroke-width="2"/>
+          <line x1="20" y1="52" x2="56" y2="22" stroke="#1D9E75" stroke-width="2"/>
+          <path d="M40 52 A20 20 0 0 0 34.5 39.5" fill="none" stroke="#2B2A26" stroke-width="1.4"/>
+          <circle cx="20" cy="52" r="3.4" fill="#2B2A26"/>
+          <circle cx="56" cy="22" r="6" fill="#1D9E75"/>
+          <text x="13" y="61" font-size="9" fill="#2B2A26">O</text>
+          <text x="86" y="56" font-size="9" fill="#2B2A26">A</text>
+          <text x="41" y="44" font-size="8.5" fill="#6B6760">60°</text>
+        </svg>
+        <div>
+          <div class="name">角与角度<span class="badge-new">NEW</span></div>
+          <div class="desc">拖动射线凑度数 · 角的类型 · 角平分线</div>
+        </div>
+      </div>
+      <div class="meta">
+        <span class="count">1 章 · 3 关（建设中）</span>
+        <span class="go">进入 ›</span>
+      </div>
+    </a>
 
-  function pos(e) {
-    var r = cv.getBoundingClientRect();
-    return { x: e.clientX - r.left, y: e.clientY - r.top };
-  }
+  </div>
 
-  var down = false;
-  cv.addEventListener('pointerdown', function (e) {
-    e.preventDefault();
-    down = true;
-    cv.setPointerCapture && cv.setPointerCapture(e.pointerId);
-    var p = pos(e);
-    game.pointer('down', p.x, p.y);
-  });
-  cv.addEventListener('pointermove', function (e) {
-    if (!down) return;
-    e.preventDefault();
-    var p = pos(e);
-    game.pointer('move', p.x, p.y);
-  });
-  cv.addEventListener('pointerup', function (e) {
-    if (!down) return;
-    down = false;
-    var p = pos(e);
-    game.pointer('up', p.x, p.y);
-  });
-  cv.addEventListener('pointercancel', function () {
-    down = false;
-    game.pointer('up', -999, -999);
-  });
-  cv.addEventListener('contextmenu', function (e) { e.preventDefault(); });
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' || e.key === ' ') { game.pointer('down', -999, -999); game.pointer('up', -999, -999); }
-  });
-
-  var last = performance.now();
-  var warm = 0;
-  function loop(now) {
-    var dt = Math.min((now - last) / 1000, 0.05);
-    last = now;
-    if (warm < 4) { warm++; resize(); }
-    game.frame(dt);
-    requestAnimationFrame(loop);
-  }
-  requestAnimationFrame(loop);
-})();
-</script>
+  <p class="foot">更多关卡与章节，陆续上线</p>
+</div>
 </body>
 </html>
