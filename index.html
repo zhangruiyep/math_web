@@ -125,5 +125,20 @@
 
   <p class="foot">更多关卡与章节，陆续上线</p>
 </div>
+<script>
+  // 发布平台的分享链接带 ?sharecode=…，子页面也必须带上才能访问；
+  // 这里把当前链接里的 sharecode 透传给两个游戏入口（本地打开时没有该参数则跳过）。
+  (function () {
+    try {
+      var code = new URLSearchParams(location.search).get('sharecode');
+      if (!code) return;
+      var cards = document.querySelectorAll('a.gcard');
+      for (var i = 0; i < cards.length; i++) {
+        var a = cards[i];
+        a.setAttribute('href', a.getAttribute('href') + '?sharecode=' + encodeURIComponent(code));
+      }
+    } catch (e) {}
+  })();
+</script>
 </body>
 </html>
