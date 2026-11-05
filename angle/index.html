@@ -85,6 +85,15 @@
         game.qWhy = lvw.kind === 'pick' ? lvw.why[1] : lvw.why.A;
       }
     }
+    if (q.has('multi')) {
+      var ms = game.level();
+      if (ms.kind === 'multi') {
+        q.get('multi').split(',').forEach(function (v) {
+          var k = parseInt(v, 10);
+          if (k >= 0 && k <= 3) game.multiSel[k] = true;
+        });
+      }
+    }
     if (q.get('solve') === '1') {
       game.autoSolve();
       game.t = game.solvedAt + 2;

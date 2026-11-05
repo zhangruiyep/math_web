@@ -57,7 +57,19 @@
       figs: [{ kind: 'angle' }, { kind: 'loose' }, { kind: 'dotray' }],
       why: { 1: '两条射线没有公共端点，不是角', 2: '只有一条射线，还差一条' }
     },
-    /* 2. 顶点与边 */
+    /* 2. 多选：哪些图形是角（含直线 vs 平角 的辨析） */
+    {
+      ch: 1, kind: 'multi', q: '下面哪些图形是角？全都找出来', ans: [0, 3],
+      tip: '两条射线 + 一个公共端点，缺一不可',
+      note: '平角的边成一条直线，但有顶点，是角；直线没有顶点，不是角',
+      figs: [{ kind: 'angle' }, { kind: 'loose' }, { kind: 'line' }, { kind: 'straight' }],
+      why: {
+        1: '两条射线没有公共端点，不是角',
+        2: '直线没有顶点，不是角——平角才有顶点',
+        3: '漏了它！平角也有公共端点，是 180° 的角'
+      }
+    },
+    /* 3. 顶点与边 */
     {
       ch: 1, kind: 'tap', q: '∠AOB 的顶点在哪？点一下', deg: 52, ans: 'O',
       tip: '两条边的公共端点就是顶点',
@@ -215,6 +227,8 @@
     this.qNextAt = 0;
     this.picked = -1;
     this.pickBad = -1;
+    this.multiSel = {};
+    this.multiShakeAt = -1;
     this.doneAt = 0;
     this.loadLevel(0);
     this.mode = 'menu';
@@ -258,6 +272,8 @@
     this.qNextAt = 0;
     this.picked = -1;
     this.pickBad = -1;
+    this.multiSel = {};
+    this.multiShakeAt = -1;
     this.doneAt = 0;
   };
 
@@ -303,6 +319,7 @@
     var lv = this.level();
     if (lv.kind === 'drag') this.pointerDrag(type, p);
     else if (lv.kind === 'quiz') this.pointerQuiz(type, p);
+    else if (lv.kind === 'multi') this.pointerMulti(type, p);
     else if (lv.kind === 'pick') this.pointerPick(type, p);
     else this.pointerTap(type, p);
   };
@@ -380,6 +397,66 @@
           this.qWhy = (lv.why && lv.why[i]) || '';
           tone(220, 0.12, 0.03);
         }
+        return;
+      }
+    }
+  };
+
+  /* ---------- 多选：哪些是角 ---------- */
+  AngleGame.prototype.multiBoxes = function () {
+    var w = (DW - 48 - 12) / 2, h = 112, gx = 12, gy = 12, y0 = 208;
+    var out = [];
+    for (var i = 0; i < 4; i++) {
+      out.push({
+        i: i,
+        x: 24 + (i % 2) * (w + gx),
+        y: y0 + Math.floor(i / 2) * (h + gy),
+        w: w, h: h
+      });
+    }
+    return out;
+  };
+  AngleGame.prototype.multiConfirmBtn = function () {
+    return { x: DW / 2 - 70, y: 470, w: 140, h: 42 };
+  };
+  AngleGame.prototype.pointerMulti = function (type, p) {
+    if (type !== 'down' || this.doneAt) return;
+    var lv = this.level(), boxes = this.multiBoxes(), btn = this.multiConfirmBtn();
+
+    if (p.x >= btn.x && p.x <= btn.x + btn.w && p.y >= btn.y && p.y <= btn.y + btn.h) {
+      var sel = Object.keys(this.multiSel).map(Number).sort();
+      var ans = lv.ans.slice().sort();
+      var ok = sel.length === ans.length;
+      if (ok) for (var k = 0; k < sel.length; k++) if (sel[k] !== ans[k]) { ok = false; break; }
+      if (ok) {
+        this.doneAt = this.t + 0.6;
+        this.qWhy = '';
+        tone(720, 0.09, 0.04);
+      } else {
+        this.misses++;
+        var msg = '';
+        for (var s = 0; s < sel.length; s++) {
+          if (lv.ans.indexOf(sel[s]) < 0) { msg = (lv.why && lv.why[sel[s]]) || '这个图形不是角'; break; }
+        }
+        if (!msg) {
+          for (var a = 0; a < ans.length; a++) {
+            if (sel.indexOf(ans[a]) < 0) { msg = (lv.why && lv.why[ans[a]]) || '漏了一个角，再找找'; break; }
+          }
+        }
+        this.qWhy = msg || '选得不对，再想想';
+        this.multiShakeAt = this.t;
+        tone(220, 0.12, 0.03);
+      }
+      return;
+    }
+
+    for (var i = 0; i < boxes.length; i++) {
+      var b = boxes[i];
+      if (p.x >= b.x - 4 && p.x <= b.x + b.w + 4 && p.y >= b.y - 4 && p.y <= b.y + b.h + 4) {
+        if (this.multiSel[i]) delete this.multiSel[i];
+        else this.multiSel[i] = true;
+        this.qWhy = '';
+        tone(this.multiSel[i] ? 560 : 440, 0.05, 0.02);
         return;
       }
     }
@@ -469,6 +546,7 @@
     var lv = this.level();
     if (lv.kind === 'drag') this.deg = lv.target;
     else if (lv.kind === 'quiz') { this.qi = lv.qs.length - 1; this.deg = lv.qs[this.qi].deg; }
+    else if (lv.kind === 'multi') { for (var k = 0; k < lv.ans.length; k++) this.multiSel[lv.ans[k]] = true; }
     this.solve();
   };
   AngleGame.prototype.advance = function () {
@@ -498,6 +576,7 @@
     if (lv.kind === 'drag') return { answer: '∠AOB = ' + lv.target + '°', note: lv.note || '' };
     if (lv.kind === 'quiz') return { answer: '锐角 · 直角 · 钝角 · 平角 · 周角', note: lv.note || '' };
     if (lv.kind === 'pick') return { answer: '两条射线 + 公共端点 = 角', note: lv.note || '' };
+    if (lv.kind === 'multi') return { answer: '角 = 公共端点 + 两条射线（平角也是角）', note: lv.note || '' };
     return { answer: '顶点 O · 边 OA 和 OB', note: lv.note || '' };
   };
 
@@ -611,6 +690,7 @@
     if (lv.kind === 'drag') this.drawDragScene();
     else if (lv.kind === 'quiz') this.drawQuizScene();
     else if (lv.kind === 'pick') this.drawPickScene();
+    else if (lv.kind === 'multi') this.drawMultiScene();
     else this.drawTapScene();
 
     if (this.solved) this.drawOverlay();
@@ -801,7 +881,7 @@
     ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = PAL.ink3;
     ctx.font = font(10.5, 500);
-    ctx.fillText(lv.kind === 'quiz' ? '判断' : '问题', 40, 94);
+    ctx.fillText(lv.kind === 'quiz' ? '判断' : (lv.kind === 'multi' ? '多选' : '问题'), 40, 94);
 
     if (lv.kind === 'quiz') {
       ctx.textAlign = 'right';
@@ -1086,6 +1166,74 @@
     ctx.fillText(label, b.x + b.w / 2, b.y + b.h / 2 + 0.5);
   };
 
+  /* ---------- 多选场景 ---------- */
+  AngleGame.prototype.drawMultiScene = function () {
+    var ctx = this.ctx;
+    var lv = this.level();
+    var boxes = this.multiBoxes();
+    var btn = this.multiConfirmBtn();
+    var shake = 0;
+    if (this.multiShakeAt > 0 && this.t - this.multiShakeAt < 0.32) {
+      shake = Math.sin((this.t - this.multiShakeAt) * 60) * 2.5;
+    }
+
+    var nSel = Object.keys(this.multiSel).length;
+    for (var i = 0; i < boxes.length; i++) {
+      var b = boxes[i];
+      var on = !!this.multiSel[i];
+      var bx = b.x + shake;
+
+      rr(ctx, bx, b.y, b.w, b.h, 14);
+      ctx.fillStyle = on ? PAL.tealBg : PAL.card;
+      ctx.fill();
+      ctx.strokeStyle = on ? PAL.teal : PAL.rule;
+      ctx.lineWidth = on ? 1.8 : 1;
+      ctx.stroke();
+
+      this.drawFig(lv.figs[i].kind, { x: bx, y: b.y, w: b.w, h: b.h }, false);
+
+      /* 右上角勾选圆点 */
+      ctx.beginPath();
+      ctx.arc(bx + b.w - 16, b.y + 16, 9.5, 0, Math.PI * 2);
+      ctx.fillStyle = on ? PAL.teal : PAL.card;
+      ctx.fill();
+      ctx.strokeStyle = on ? PAL.teal : PAL.rule;
+      ctx.lineWidth = on ? 1.4 : 1.2;
+      ctx.stroke();
+      if (on) {
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(bx + b.w - 20, b.y + 16);
+        ctx.lineTo(bx + b.w - 17, b.y + 19.5);
+        ctx.lineTo(bx + b.w - 12, b.y + 12);
+        ctx.stroke();
+        ctx.lineCap = 'butt';
+      }
+
+      /* 左上角编号 */
+      ctx.fillStyle = PAL.ink3;
+      ctx.font = font(11);
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('A B C D'.charAt(i * 2), bx + 12, b.y + 16);
+    }
+
+    /* 确认按钮 */
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    rr(ctx, btn.x, btn.y, btn.w, btn.h, 21);
+    ctx.fillStyle = nSel > 0 ? PAL.teal : PAL.rule;
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = font(15, 500);
+    ctx.fillText(nSel > 0 ? '确认（已选 ' + nSel + ' 个）' : '确认', DW / 2, btn.y + btn.h / 2 + 0.5);
+
+    if (this.qWhy) this.drawFooter({ text: this.qWhy, color: PAL.wrong });
+    else this.drawFooter({ text: '点选所有是角的图形，再按“确认”', color: PAL.ink3 });
+  };
+
   /* ---------- 选图形场景 ---------- */
   AngleGame.prototype.drawPickScene = function () {
     var lv = this.level();
@@ -1143,6 +1291,25 @@
       ctx.arc(x + 26, y + 94, 3, 0, Math.PI * 2);
       ctx.arc(x + 58, y + 34, 3, 0, Math.PI * 2);
       ctx.fill();
+    } else if (kind === 'line') {
+      /* 一条直线：没有顶点 */
+      ctx.beginPath();
+      ctx.moveTo(x + 16, y + 30);
+      ctx.lineTo(x + 84, y + 88);
+      ctx.stroke();
+    } else if (kind === 'straight') {
+      /* 平角：顶点在中间，两条边成一条直线 */
+      ctx.beginPath();
+      ctx.moveTo(x + 14, y + 62);
+      ctx.lineTo(x + 86, y + 62);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x + 50, y + 62, 3.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.font = font(11, 500);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('O', x + 50, y + 78);
     } else {
       ctx.beginPath();
       ctx.arc(x + 38, y + 86, 3.6, 0, Math.PI * 2);
