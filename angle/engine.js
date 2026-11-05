@@ -34,14 +34,49 @@
   var TOL = 1.5;        // 过关容差（度）
   var GHOST_DELAY = 10; // 幽灵目标出现时间
 
-  var CH_NAME = { 1: '角的概念', 2: '角的度量与换算', 3: '角的比较', 4: '角平分线' };
-  var CH_SUB = { 1: '顶点 · 两条边 · 五类角', 2: '度 · 分 · 秒，六十进制', 3: '谁大谁小，比一比', 4: '把角分成两半' };
+  var CH_NAME = { 1: '角的概念', 2: '角的度量与换算', 3: '角的表示与计数', 4: '角平分线' };
+  var CH_SUB = { 1: '顶点 · 两条边 · 五类角', 2: '度 · 分 · 秒，六十进制', 3: '找全图中所有小于平角的角', 4: '把角分成两半' };
   var CH_NUM = { 1: '一', 2: '二', 3: '三', 4: '四' };
+
+  /* 第三章用的图形（点坐标在 300×150 的虚拟框里，绘制时缩放居中） */
+  var FIGS = {
+    /* 纯三角形 ABC */
+    tri0: {
+      pts: {
+        A: { x: 150, y: 18, dx: 0, dy: -10 },
+        B: { x: 28, y: 132, dx: -14, dy: 4 },
+        C: { x: 252, y: 132, dx: 10, dy: 12 }
+      },
+      segs: [['A', 'B'], ['B', 'C'], ['C', 'A']]
+    },
+    /* 三角形 ABC，E 在 AC 上，连 BE（教材图 1） */
+    tri: {
+      pts: {
+        A: { x: 150, y: 18, dx: 0, dy: -10 },
+        B: { x: 28, y: 132, dx: -14, dy: 4 },
+        C: { x: 252, y: 132, dx: 10, dy: 12 },
+        E: { x: 201, y: 75, dx: 15, dy: 4 }
+      },
+      segs: [['A', 'B'], ['B', 'C'], ['C', 'A'], ['B', 'E']]
+    },
+    /* 三角形 ABC，D 在 BC 上，连 AD、CE，BC 延长到 F（教材图 2） */
+    fig2: {
+      pts: {
+        A: { x: 140, y: 15, dx: 0, dy: -10 },
+        B: { x: 22, y: 132, dx: -14, dy: 4 },
+        D: { x: 105, y: 132, dx: 0, dy: 16 },
+        C: { x: 195, y: 132, dx: 0, dy: 16 },
+        F: { x: 285, y: 132, dx: 10, dy: 4 },
+        E: { x: 247, y: 32, dx: 14, dy: 0 }
+      },
+      segs: [['A', 'B'], ['A', 'D'], ['A', 'C'], ['C', 'E'], ['B', 'F']]
+    }
+  };
 
   var CHAPTERS = [
     { ch: 1, ready: true },
     { ch: 2, ready: true },
-    { ch: 3, ready: false },
+    { ch: 3, ready: true },
     { ch: 4, ready: false }
   ];
 
@@ -312,6 +347,100 @@
         { q: '度相减：36 − 15 = ?', expr: '36°54′ − 15°54′ = ?', opts: ['21°', '21°18′', '20°'], ans: 0,
           why: '36 − 15 = 21，分是 0，所以结果是 21°' }
       ]
+    },
+
+    /* ================= 第三章 角的表示与计数 ================= */
+    /* 21. 三角形：图中有几个角 */
+    {
+      ch: 3, kind: 'list', fig: 'tri0',
+      q: '图中有几个角？全都选出来',
+      names: ['∠A', '∠B', '∠C', '∠D', '∠AB'], ans: [0, 1, 2],
+      answer: '三角形有 3 个角：∠A、∠B、∠C',
+      tip: '每个顶点一个角，三角形的三个顶点各有一个',
+      note: '△ABC 有 3 个角；一个角要用一个字母或三个字母表示',
+      why: {
+        3: '图中没有点 D',
+        4: '两个字母不能表示角，要用一个字母（∠A）或三个字母（∠BAC）'
+      }
+    },
+    /* 22. 同一个角的多种写法 */
+    {
+      ch: 3, kind: 'list', fig: 'tri0',
+      q: '图中的 ∠A，可以写成下面哪些？',
+      names: ['∠BAC', '∠CAB', '∠A', '∠ABC', '∠BCA', '∠B'], ans: [0, 1, 2],
+      answer: '∠A = ∠BAC = ∠CAB',
+      tip: '顶点字母必须写在中间；顶点处只有一个角时可以用一个字母',
+      note: '同一个角有多种写法，顶点字母永远在中间',
+      why: {
+        3: '∠ABC 的顶点是 B，那不是 ∠A',
+        4: '∠BCA 的顶点是 C，那是 ∠C',
+        5: '∠B 是 B 处的角，不是 A 处的'
+      }
+    },
+    /* 23. 教材图 1：三角形 + 一条内线，全列出（7 个） */
+    {
+      ch: 3, kind: 'list', fig: 'tri',
+      q: '列出图中所有小于平角的角',
+      names: ['∠BAE', '∠ABE', '∠EBC', '∠ABC', '∠BCA', '∠AEB', '∠BEC', '∠AEC', '∠BED'],
+      ans: [0, 1, 2, 3, 4, 5, 6],
+      answer: '共 7 个：∠BAE、∠ABE、∠EBC、∠ABC、∠BCA、∠AEB、∠BEC',
+      tip: '每个顶点都要查：2 条射线 1 个角，3 条射线 3 个角',
+      note: '7 个角：B 处 3 个、E 处 2 个、A 和 C 各 1 个',
+      why: {
+        7: 'A、E、C 三点共线，∠AEC 正好是平角，不能算',
+        8: '图中没有点 D，∠BED 不存在'
+      }
+    },
+    /* 24. 教材图 1：按顶点系统数 */
+    {
+      ch: 3, kind: 'quiz', scene: 'fig', fig: 'tri', label: '数角',
+      q: '按顶点数一数图中的角',
+      answer: '共 7 个：A 处 1、B 处 3、C 处 1、E 处 2',
+      tip: '顶点处 n 条射线，小于平角的角最多 n 取 2 组合数',
+      note: '数角要按顶点一个一个数，才不会漏',
+      qs: [
+        { q: '图中小于平角的角共有几个？', opts: ['7 个', '5 个', '6 个'], ans: 0,
+          why: 'A 处 1 个、B 处 3 个、C 处 1 个、E 处 2 个，共 7 个' },
+        { q: '以 B 为顶点的有几个？', opts: ['3 个', '2 个', '1 个'], ans: 0,
+          why: 'B 处有 3 条射线 BA、BE、BC，两两配对得 ∠ABE、∠EBC、∠ABC 共 3 个' },
+        { q: '以 E 为顶点的有几个？', opts: ['2 个', '3 个', '1 个'], ans: 0,
+          why: 'E 处 3 条射线配 3 组，但 EA 和 EC 合成平角，去掉后剩 2 个' },
+        { q: '∠AEC 要不要列进去？', opts: ['不要，它是平角', '要，它小于平角', '要，它是周角'], ans: 0,
+          why: 'A、E、C 三点共线，∠AEC 是平角，题目只要小于平角的' }
+      ]
+    },
+    /* 25. 教材图 2：以 A、B、D 为顶点列角（6 个） */
+    {
+      ch: 3, kind: 'list', fig: 'fig2',
+      q: '列出以 A、B、D 为顶点的所有角',
+      names: ['∠BAD', '∠DAC', '∠BAC', '∠ABD', '∠ADB', '∠ADC', '∠BDC', '∠ECF', '∠DAF'],
+      ans: [0, 1, 2, 3, 4, 5],
+      answer: '共 6 个：∠BAD、∠DAC、∠BAC、∠ABD、∠ADB、∠ADC',
+      tip: '只要小于平角的角；先看顶点引出几条射线',
+      note: 'A 处 3 条射线配 3 个角；D 处 ∠BDC 是平角要去掉',
+      why: {
+        6: 'B、D、C 在一条直线上，∠BDC 是平角，不能算',
+        7: '这一问只要 A、B、D 做顶点的角，∠ECF 的顶点是 C',
+        8: 'A 和 F 之间没有连线，这个角不存在'
+      }
+    },
+    /* 26. 教材图 2：数总数（11 个） */
+    {
+      ch: 3, kind: 'quiz', scene: 'fig', fig: 'fig2', label: '数角',
+      q: '数一数：图中共有几个小于平角的角？',
+      answer: '共 11 个：A 处 3、B 处 1、D 处 2、C 处 5',
+      tip: 'C 处射线最多，最容易漏——4 条射线两两配对有 6 组',
+      note: '按顶点数：A:3、B:1、D:2、C:5，共 11 个',
+      qs: [
+        { q: '以 C 为顶点的小于平角的角有几个？', opts: ['5 个', '3 个', '6 个'], ans: 0,
+          why: 'C 处 4 条射线 CB、CA、CE、CF 配 6 组，去掉平角 ∠BCF 剩 5 个' },
+        { q: '以 D 为顶点的有几个？', opts: ['2 个', '3 个', '1 个'], ans: 0,
+          why: 'D 处 3 条射线 DB、DA、DC，DB 和 DC 合成平角去掉，剩 2 个' },
+        { q: '图中小于平角的角共有几个？', opts: ['11 个', '8 个', '13 个'], ans: 0,
+          why: 'A 处 3 个、B 处 1 个、D 处 2 个、C 处 5 个，共 11 个' },
+        { q: 'E 处有没有要列的角？', opts: ['没有，E 只引出一条射线', '有 1 个', '有 2 个'], ans: 0,
+          why: '一个角要两条射线，E 处只有 EC 一条，构不成角' }
+      ]
     }
   ];
 
@@ -518,6 +647,7 @@
     if (lv.kind === 'drag') this.pointerDrag(type, p);
     else if (lv.kind === 'quiz') this.pointerQuiz(type, p);
     else if (lv.kind === 'multi') this.pointerMulti(type, p);
+    else if (lv.kind === 'list') this.pointerList(type, p);
     else if (lv.kind === 'pick') this.pointerPick(type, p);
     else this.pointerTap(type, p);
   };
@@ -760,7 +890,7 @@
     var lv = this.level();
     if (lv.kind === 'drag') this.deg = lv.target;
     else if (lv.kind === 'quiz') { this.qi = lv.qs.length - 1; if (lv.qs[this.qi].deg != null) this.deg = lv.qs[this.qi].deg; }
-    else if (lv.kind === 'multi') { for (var k = 0; k < lv.ans.length; k++) this.multiSel[lv.ans[k]] = true; }
+    else if (lv.kind === 'multi' || lv.kind === 'list') { for (var k = 0; k < lv.ans.length; k++) this.multiSel[lv.ans[k]] = true; }
     this.solve();
   };
   AngleGame.prototype.advance = function () {
@@ -906,6 +1036,7 @@
     else if (lv.kind === 'quiz') this.drawQuizScene();
     else if (lv.kind === 'pick') this.drawPickScene();
     else if (lv.kind === 'multi') this.drawMultiScene();
+    else if (lv.kind === 'list') this.drawListScene();
     else this.drawTapScene();
 
     if (this.solved) this.drawOverlay();
@@ -1334,6 +1465,7 @@
     var q = this.curQ();
 
     if (lv.scene === 'expr') { this.drawExprScene(); return; }
+    if (lv.scene === 'fig') { this.drawFigQuizScene(); return; }
 
     var savedDeg = this.deg;
     this.deg = q.deg;
@@ -1428,6 +1560,196 @@
       ctx.font = font(10.5);
       ctx.fillText(lv.hintline || '一步一步来，先想想这一步算什么', DW / 2, 300);
     }
+
+    var btns = this.quizButtons(), opts = this.curOpts();
+    for (var i = 0; i < btns.length; i++) this.drawOptButton(btns[i], opts[i]);
+
+    var footer = { text: '选一个正确答案', color: PAL.ink3 };
+    if (this.qWhy) footer = { text: this.qWhy, color: PAL.wrong };
+    else if (this.t - this.levelStartAt > GHOST_DELAY) footer = { text: lv.tip || '', color: PAL.ink3 };
+    this.drawFooter(footer);
+  };
+
+  /* ---------- 图形绘制（第三章 数角） ---------- */
+  AngleGame.prototype.drawFigure = function (key, x, y, w, h) {
+    var ctx = this.ctx;
+    var fig = FIGS[key];
+    if (!fig) return;
+    var xs = [], ys = [], k;
+    for (k in fig.pts) { xs.push(fig.pts[k].x); ys.push(fig.pts[k].y); }
+    var minx = Math.min.apply(null, xs), maxx = Math.max.apply(null, xs);
+    var miny = Math.min.apply(null, ys), maxy = Math.max.apply(null, ys);
+    var s = Math.min((w - 30) / (maxx - minx), (h - 30) / (maxy - miny));
+    var ox = x + (w - (maxx - minx) * s) / 2, oy = y + (h - (maxy - miny) * s) / 2;
+    function P(p) {
+      return { x: ox + (p.x - minx) * s, y: oy + (p.y - miny) * s };
+    }
+    ctx.strokeStyle = PAL.ink;
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    for (var i = 0; i < fig.segs.length; i++) {
+      var p1 = P(fig.pts[fig.segs[i][0]]), p2 = P(fig.pts[fig.segs[i][1]]);
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+    }
+    ctx.lineCap = 'butt';
+    ctx.fillStyle = PAL.ink;
+    for (k in fig.pts) {
+      var pt = P(fig.pts[k]);
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 2.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.font = font(13, 500);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(k, pt.x + fig.pts[k].dx, pt.y + fig.pts[k].dy);
+    }
+  };
+
+  /* ---------- 列角题：勾选图中所有小于平角的角 ---------- */
+  AngleGame.prototype.listChips = function () {
+    var lv = this.level();
+    var n = lv.names.length;
+    var per = 3, w = (DW - 48 - 2 * 8) / 3, h = 36, gx = 8, gy = 8, y0 = 352;
+    var out = [];
+    for (var i = 0; i < n; i++) {
+      var row = Math.floor(i / per), col = i % per;
+      var inRow = Math.min(per, n - row * per);
+      var x0 = (DW - (inRow * w + (inRow - 1) * gx)) / 2;
+      out.push({ i: i, x: x0 + col * (w + gx), y: y0 + row * (h + gy), w: w, h: h });
+    }
+    return out;
+  };
+  AngleGame.prototype.listConfirmBtn = function () {
+    var rows = Math.ceil(this.level().names.length / 3);
+    var y = 352 + rows * 36 + (rows - 1) * 8 + 14;
+    return { x: DW / 2 - 70, y: y, w: 140, h: 42 };
+  };
+  AngleGame.prototype.pointerList = function (type, p) {
+    if (type !== 'down' || this.doneAt) return;
+    var lv = this.level(), chips = this.listChips(), btn = this.listConfirmBtn();
+
+    if (p.x >= btn.x && p.x <= btn.x + btn.w && p.y >= btn.y && p.y <= btn.y + btn.h) {
+      var sel = Object.keys(this.multiSel).map(Number).sort();
+      var ans = lv.ans.slice().sort();
+      var ok = sel.length === ans.length;
+      if (ok) for (var k = 0; k < sel.length; k++) if (sel[k] !== ans[k]) { ok = false; break; }
+      if (ok) {
+        this.doneAt = this.t + 0.6;
+        this.qWhy = '';
+        tone(720, 0.09, 0.04);
+      } else {
+        this.misses++;
+        var msg = '';
+        for (var s = 0; s < sel.length; s++) {
+          if (lv.ans.indexOf(sel[s]) < 0) { msg = (lv.why && lv.why[sel[s]]) || '这个不是图中要列的角'; break; }
+        }
+        if (!msg) {
+          for (var a = 0; a < ans.length; a++) {
+            if (sel.indexOf(ans[a]) < 0) { msg = (lv.why && lv.why[ans[a]]) || '还漏了角，每个顶点都再检查一遍'; break; }
+          }
+        }
+        this.qWhy = msg || '选得不对，再想想';
+        this.multiShakeAt = this.t;
+        tone(220, 0.12, 0.03);
+      }
+      return;
+    }
+
+    for (var i = 0; i < chips.length; i++) {
+      var b = chips[i];
+      if (p.x >= b.x - 4 && p.x <= b.x + b.w + 4 && p.y >= b.y - 4 && p.y <= b.y + b.h + 4) {
+        if (this.multiSel[i]) delete this.multiSel[i];
+        else this.multiSel[i] = true;
+        this.qWhy = '';
+        tone(this.multiSel[i] ? 560 : 440, 0.05, 0.02);
+        return;
+      }
+    }
+  };
+  AngleGame.prototype.drawListScene = function () {
+    var ctx = this.ctx;
+    var lv = this.level();
+    var chips = this.listChips();
+    var btn = this.listConfirmBtn();
+    var shake = 0;
+    if (this.multiShakeAt > 0 && this.t - this.multiShakeAt < 0.32) {
+      shake = Math.sin((this.t - this.multiShakeAt) * 60) * 2.5;
+    }
+
+    /* 图形面板 */
+    rr(ctx, 24, 182, DW - 48, 152, 16);
+    ctx.fillStyle = PAL.card;
+    ctx.fill();
+    ctx.strokeStyle = PAL.rule;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    this.drawFigure(lv.fig, 34, 190, DW - 68, 136);
+
+    /* 角名 chips */
+    var nSel = Object.keys(this.multiSel).length;
+    for (var i = 0; i < chips.length; i++) {
+      var b = chips[i];
+      var on = !!this.multiSel[i];
+      var bx = b.x + shake;
+      rr(ctx, bx, b.y, b.w, b.h, 10);
+      ctx.fillStyle = on ? PAL.tealBg : PAL.card;
+      ctx.fill();
+      ctx.strokeStyle = on ? PAL.teal : PAL.rule;
+      ctx.lineWidth = on ? 1.6 : 1;
+      ctx.stroke();
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = on ? PAL.teal : PAL.ink;
+      ctx.font = font(12.5, 500);
+      ctx.fillText(lv.names[i], bx + b.w / 2, b.y + b.h / 2 + 0.5);
+
+      if (on) {
+        ctx.strokeStyle = PAL.teal;
+        ctx.lineWidth = 1.6;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(bx + 14, b.y + b.h / 2, 5.5, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(bx + 11.5, b.y + b.h / 2 + 0.5);
+        ctx.lineTo(bx + 13.5, b.y + b.h / 2 + 2.8);
+        ctx.lineTo(bx + 17.5, b.y + b.h / 2 - 2.5);
+        ctx.stroke();
+        ctx.lineCap = 'butt';
+      }
+    }
+
+    /* 确认按钮 */
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    rr(ctx, btn.x, btn.y, btn.w, btn.h, 21);
+    ctx.fillStyle = nSel > 0 ? PAL.teal : PAL.rule;
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = font(15, 500);
+    ctx.fillText(nSel > 0 ? '确认（已选 ' + nSel + ' 个）' : '确认', DW / 2, btn.y + btn.h / 2 + 0.5);
+
+    if (this.qWhy) this.drawFooter({ text: this.qWhy, color: PAL.wrong });
+    else this.drawFooter({ text: '点选所有符合的角，再按“确认”', color: PAL.ink3 });
+  };
+
+  /* ---------- 数角题（图形 + 选择题） ---------- */
+  AngleGame.prototype.drawFigQuizScene = function () {
+    var ctx = this.ctx;
+    var lv = this.level();
+
+    rr(ctx, 24, 186, DW - 48, 234, 16);
+    ctx.fillStyle = PAL.card;
+    ctx.fill();
+    ctx.strokeStyle = PAL.rule;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    this.drawFigure(lv.fig, 34, 196, DW - 68, 214);
 
     var btns = this.quizButtons(), opts = this.curOpts();
     for (var i = 0; i < btns.length; i++) this.drawOptButton(btns[i], opts[i]);
