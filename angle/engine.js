@@ -34,13 +34,13 @@
   var TOL = 1.5;        // 过关容差（度）
   var GHOST_DELAY = 10; // 幽灵目标出现时间
 
-  var CH_NAME = { 1: '角的概念', 2: '角的比较', 3: '角平分线', 4: '余角与补角' };
-  var CH_SUB = { 1: '顶点 · 两条边 · 五类角', 2: '谁大谁小，比一比', 3: '把角分成两半', 4: '凑够 90° 和 180°' };
+  var CH_NAME = { 1: '角的概念', 2: '角的度量与换算', 3: '角的比较', 4: '角平分线' };
+  var CH_SUB = { 1: '顶点 · 两条边 · 五类角', 2: '度 · 分 · 秒，六十进制', 3: '谁大谁小，比一比', 4: '把角分成两半' };
   var CH_NUM = { 1: '一', 2: '二', 3: '三', 4: '四' };
 
   var CHAPTERS = [
     { ch: 1, ready: true },
-    { ch: 2, ready: false },
+    { ch: 2, ready: true },
     { ch: 3, ready: false },
     { ch: 4, ready: false }
   ];
@@ -113,6 +113,204 @@
         { deg: 126, ans: 2, why: '超过 90° 但不到 180°，是钝角' },
         { deg: 180, ans: 3, why: '两条边成一条直线，是平角' },
         { deg: 360, ans: 4, why: '绕了一整圈回到原处，是周角' }
+      ]
+    },
+
+    /* ================= 第二章 角的度量与换算 ================= */
+    /* 10. 度分秒的意义：六十进制 */
+    {
+      ch: 2, kind: 'quiz', scene: 'expr', label: '进率',
+      q: '度、分、秒的进率是多少？',
+      answer: '1° = 60′ = 3600″',
+      tip: '六十进制：度化分乘 60，分化秒再乘 60',
+      note: '度分秒是六十进制：1° = 60′ = 3600″',
+      qs: [
+        { q: '1° 等于多少分？', expr: '1° = ?′', opts: ['60′', '100′', '10′'], ans: 0,
+          why: '1° = 60′，度化分要乘 60', done: '1° = 60′' },
+        { q: '1′ 等于多少秒？', expr: '1′ = ?″', opts: ['60″', '100″', '10″'], ans: 0,
+          why: '1′ = 60″，分化秒也要乘 60', done: '1′ = 60″' },
+        { q: '1° 等于多少秒？', expr: '1° = ?″', opts: ['3600″', '600″', '360″'], ans: 0,
+          why: '60 × 60 = 3600，所以 1° = 3600″', done: '1° = 3600″' },
+        { q: '下面哪个式子是对的？', expr: '1° = 60′ = 3600″', opts: ['1° = 60′ = 3600″', '1° = 100′ = 10000″', '1° = 60′ = 600″'], ans: 0,
+          why: '度、分、秒是六十进制，一级一级乘 60' }
+      ]
+    },
+    /* 11. 度 → 分 */
+    {
+      ch: 2, kind: 'quiz', scene: 'expr', label: '换算',
+      q: '把度化成分',
+      answer: '度化分：乘 60（1° = 60′）',
+      tip: '度化分：乘 60',
+      note: '度化分乘 60：小数部分的小数点后两位，乘 60 就是分',
+      qs: [
+        { q: '2° 是多少分？', expr: '2° = ?′', opts: ['120′', '20′', '200′'], ans: 0,
+          why: '2 × 60 = 120，所以是 120′', done: '2° = 120′' },
+        { q: '0.5° 是多少分？', expr: '0.5° = ?′', opts: ['30′', '50′', '5′'], ans: 0,
+          why: '0.5 × 60 = 30，不满 1 度就是 30′', done: '0.5° = 30′' },
+        { q: '0.1° 是多少分？', expr: '0.1° = ?′', opts: ['6′', '10′', '1′'], ans: 0,
+          why: '0.1 × 60 = 6，所以是 6′', done: '0.1° = 6′' },
+        { q: '1.5° 是多少分？', expr: '1.5° = ?′', opts: ['90′', '75′', '150′'], ans: 0,
+          why: '1.5 × 60 = 90，也就是 1°30′' }
+      ]
+    },
+    /* 12. 小数度 → 度分秒（分是整数） */
+    {
+      ch: 2, kind: 'quiz', scene: 'expr', label: '换算',
+      q: '把 36.4° 化成度分秒',
+      answer: '36.4° = 36°24′',
+      tip: '整数部分留作度，小数部分 ×60 化分',
+      note: '36.4° = 36° + 0.4° = 36° + 24′',
+      qs: [
+        { q: '整数部分是多少度？', expr: '36.4° = 36° + 0.4°', opts: ['36°', '37°', '0.4°'], ans: 0,
+          why: '整数部分 36 就是 36°，剩下 0.4° 再化成分', done: '整数部分 36°' },
+        { q: '0.4° 化成多少分？', expr: '0.4 × 60 = ?′', opts: ['24′', '40′', '4′'], ans: 0,
+          why: '0.4 × 60 = 24，所以是 24′', done: '0.4° = 24′' },
+        { q: '合起来怎么写？', expr: '36.4° = ?', opts: ['36°24′', '36°40′', '36°4′'], ans: 0,
+          why: '36° 加上 24′，就是 36°24′，分不用再化秒了' }
+      ]
+    },
+    /* 13. 小数度 → 度分秒（带秒） */
+    {
+      ch: 2, kind: 'quiz', scene: 'expr', label: '换算',
+      q: '把 20.32° 化成度分秒',
+      answer: '20.32° = 20°19′12″',
+      tip: '分还有小数，就再乘 60 化成秒',
+      note: '20.32° = 20°19′12″：分的小数部分再乘 60 得秒',
+      qs: [
+        { q: '整数部分是多少度？', expr: '20.32° = 20° + 0.32°', opts: ['20°', '32°', '0.32°'], ans: 0,
+          why: '整数部分 20 就是 20°，0.32° 继续往下化', done: '整数部分 20°' },
+        { q: '0.32° 化成多少分？', expr: '0.32 × 60 = ?′', opts: ['19.2′', '32′', '19′'], ans: 0,
+          why: '0.32 × 60 = 19.2，注意还有 0.2′ 没化完', done: '0.32° = 19.2′' },
+        { q: '0.2′ 化成多少秒？', expr: '0.2 × 60 = ?″', opts: ['12″', '2″', '20″'], ans: 0,
+          why: '0.2 × 60 = 12，所以是 12″', done: '0.2′ = 12″' },
+        { q: '最后写成度分秒？', expr: '20.32° = ?', opts: ['20°19′12″', '20°19′2″', '20°20′12″'], ans: 0,
+          why: '20° + 19′ + 12″，就是 20°19′12″' }
+      ]
+    },
+    /* 14. 度分秒 → 度（只到分） */
+    {
+      ch: 2, kind: 'quiz', scene: 'expr', label: '换算',
+      q: '把 45°15′ 化成度',
+      answer: '45°15′ = 45.25°',
+      tip: '分化度：除以 60',
+      note: '度分秒化度：分 ÷ 60，再和度相加',
+      qs: [
+        { q: '15′ 是多少度？', expr: '15 ÷ 60 = ?°', opts: ['0.25°', '0.15°', '0.4°'], ans: 0,
+          why: '分化度除以 60：15 ÷ 60 = 0.25', done: '15′ = 0.25°' },
+        { q: '30°30′ 化成度是多少？', expr: '30°30′ = 30° + ?°', opts: ['30.5°', '30.3°', '30.05°'], ans: 0,
+          why: '30 ÷ 60 = 0.5，所以是 30.5°', done: '30°30′ = 30.5°' },
+        { q: '1°15′ 等于多少度？', expr: '1°15′ = ?', opts: ['1.25°', '1.15°', '1.5°'], ans: 0,
+          why: '15′ = 0.25°，所以是 1.25°', done: '1°15′ = 1.25°' },
+        { q: '最后把 45°15′ 化成度？', expr: '45°15′ = 45 + 15 ÷ 60', opts: ['45.25°', '45.15°', '45.4°'], ans: 0,
+          why: '15 ÷ 60 = 0.25，加上 45 得 45.25°' }
+      ]
+    },
+    /* 15. 度分秒 → 度（带秒） */
+    {
+      ch: 2, kind: 'quiz', scene: 'expr', label: '换算',
+      q: '把 20°15′36″ 化成度',
+      answer: '20°15′36″ = 20.26°',
+      tip: '秒化度除以 3600（也可以先化成 0.6′）',
+      note: '20°15′36″ = 20 + 0.25 + 0.01 = 20.26°',
+      qs: [
+        { q: '15′ 化成度是多少？', expr: '15 ÷ 60 = ?°', opts: ['0.25°', '0.15°', '0.4°'], ans: 0,
+          why: '15 ÷ 60 = 0.25', done: '15′ = 0.25°' },
+        { q: '36″ 化成度是多少？', expr: '36 ÷ 3600 = ?°', opts: ['0.01°', '0.1°', '0.036°'], ans: 0,
+          why: '36 ÷ 3600 = 0.01，秒化度要除以 3600', done: '36″ = 0.01°' },
+        { q: '也可以先把秒化成分：15′36″ = ?', expr: '15′36″ = ?′', opts: ['15.6′', '15.36′', '15.06′'], ans: 0,
+          why: '36″ = 0.6′，所以是 15.6′，再除以 60 也是 0.26°', done: '15′36″ = 15.6′' },
+        { q: '三部分相加得多少？', expr: '20 + 0.25 + 0.01 = ?', opts: ['20.26°', '20.61°', '20.255°'], ans: 0,
+          why: '20 + 0.25 + 0.01 = 20.26，所以是 20.26°' }
+      ]
+    },
+    /* 16. 加法：分满 60 进位 */
+    {
+      ch: 2, kind: 'quiz', scene: 'expr', label: '加法',
+      q: '计算 32°15′ + 21°48′',
+      answer: '32°15′ + 21°48′ = 54°3′',
+      tip: '度加度、分加分，分满 60 进 1 度',
+      note: '加法：分满 60′ 就向度进 1',
+      qs: [
+        { q: '先加度：32 + 21 = ?', expr: '32°15′ + 21°48′', opts: ['53°', '52°', '51°'], ans: 0,
+          why: '32 + 21 = 53，先记下 53°', done: '度相加 53°' },
+        { q: '再加分：15′ + 48′ = ?', expr: '15′ + 48′ = ?′', opts: ['63′', '53′', '93′'], ans: 0,
+          why: '15 + 48 = 63，分相加得 63′', done: '分相加 63′' },
+        { q: '63′ 满 60′，怎么处理？', expr: '63′ = ?', opts: ['1°3′', '63°', '6°3′'], ans: 0,
+          why: '60′ = 1°，余 3′，所以进 1° 留 3′', done: '63′ = 1°3′' },
+        { q: '最后结果是多少？', expr: '32°15′ + 21°48′ = ?', opts: ['54°3′', '53°3′', '54°63′'], ans: 0,
+          why: '53° 再加进位的 1° 得 54°，还剩 3′' }
+      ]
+    },
+    /* 17. 减法：向度借 1° = 60′ */
+    {
+      ch: 2, kind: 'quiz', scene: 'expr', label: '减法',
+      q: '计算 90° − 37°26′',
+      answer: '90° − 37°26′ = 52°34′',
+      tip: '分不够减，就向度借 1° 当 60′',
+      note: '减法：借 1° = 60′，度减 1、分加 60',
+      qs: [
+        { q: '90° 没有分，借 1° 当 60′ 写成？', expr: '90° = 89°?′', opts: ['89°60′', '90°60′', '89°0′'], ans: 0,
+          why: '借 1° 就是 60′，度减 1、分加 60', done: '90° = 89°60′' },
+        { q: '分相减：60′ − 26′ = ?', expr: '60′ − 26′ = ?′', opts: ['34′', '44′', '36′'], ans: 0,
+          why: '60 − 26 = 34，得 34′', done: '分得 34′' },
+        { q: '度相减：89 − 37 = ?', expr: '89° − 37° = ?°', opts: ['52°', '53°', '51°'], ans: 0,
+          why: '89 − 37 = 52，得 52°', done: '度得 52°' },
+        { q: '结果是多少？', expr: '90° − 37°26′ = ?', opts: ['52°34′', '52°44′', '53°34′'], ans: 0,
+          why: '52° 和 34′ 合起来就是 52°34′' }
+      ]
+    },
+    /* 18. 乘法：分乘后满 60 进位 */
+    {
+      ch: 2, kind: 'quiz', scene: 'expr', label: '乘法',
+      q: '计算 15°24′ × 3',
+      answer: '15°24′ × 3 = 46°12′',
+      tip: '度、分分别乘，分满 60 进 1 度',
+      note: '乘法：度、分分别乘，分满 60′ 进位',
+      qs: [
+        { q: '分乘：24′ × 3 = ?', expr: '24′ × 3 = ?′', opts: ['72′', '62′', '82′'], ans: 0,
+          why: '24 × 3 = 72，得 72′', done: '分得 72′' },
+        { q: '72′ 满 60′，等于？', expr: '72′ = ?', opts: ['1°12′', '1°2′', '72°'], ans: 0,
+          why: '72 − 60 = 12，进 1° 留 12′', done: '72′ = 1°12′' },
+        { q: '度乘：15° × 3 = ?', expr: '15° × 3 = ?°', opts: ['45°', '48°', '35°'], ans: 0,
+          why: '15 × 3 = 45，得 45°', done: '度得 45°' },
+        { q: '加上进位的 1°，结果是多少？', expr: '15°24′ × 3 = ?', opts: ['46°12′', '45°12′', '46°72′'], ans: 0,
+          why: '45° + 1° = 46°，还剩 12′，得 46°12′' }
+      ]
+    },
+    /* 19. 除法：度除不尽，余数化成分 */
+    {
+      ch: 2, kind: 'quiz', scene: 'expr', label: '除法',
+      q: '计算 45°36′ ÷ 2',
+      answer: '45°36′ ÷ 2 = 22°48′',
+      tip: '度除不尽，余数乘 60 化成分再除',
+      note: '除法：余下的度 ×60 化成分，和原来的分合起来再除',
+      qs: [
+        { q: '45° ÷ 2 能除尽吗？', expr: '45 ÷ 2 = 22 …… 1', opts: ['不能，余 1°', '能，得 22.5°', '能，得 21°'], ans: 0,
+          why: '45 除以 2 商 22 余 1，余下 1° 要继续化成分', done: '商 22° 余 1°' },
+        { q: '余下的 1° 化成多少分？', expr: '1° = ?′', opts: ['60′', '100′', '6′'], ans: 0,
+          why: '1° = 60′，余下的度要乘 60', done: '1° = 60′' },
+        { q: '和原来的 36′ 合起来共多少分？', expr: '60′ + 36′ = ?′', opts: ['96′', '86′', '66′'], ans: 0,
+          why: '60 + 36 = 96，一共 96′', done: '共 96′' },
+        { q: '96′ ÷ 2 = ?，最后结果？', expr: '45°36′ ÷ 2 = ?', opts: ['22°48′', '22°36′', '21°48′'], ans: 0,
+          why: '96 ÷ 2 = 48，度是 22°，得 22°48′' }
+      ]
+    },
+    /* 20. 混合运算：先乘后减 */
+    {
+      ch: 2, kind: 'quiz', scene: 'expr', label: '综合',
+      q: '计算 2 × 18°27′ − 15°54′',
+      answer: '2 × 18°27′ − 15°54′ = 21°',
+      tip: '先算乘法，再算减法，每一步盯住 60 进制',
+      note: '混合运算：先乘除后加减，分相减正好为 0',
+      qs: [
+        { q: '先算 2 倍：27′ × 2 = ?', expr: '2 × 18°27′', opts: ['54′', '44′', '57′'], ans: 0,
+          why: '27 × 2 = 54，得 54′', done: '分得 54′' },
+        { q: '18° × 2 = ?，合起来是？', expr: '2 × 18°27′ = ?', opts: ['36°54′', '36°44′', '18°54′'], ans: 0,
+          why: '18 × 2 = 36，加上 54′，得 36°54′', done: '2 × 18°27′ = 36°54′' },
+        { q: '再减分：54′ − 54′ = ?', expr: '36°54′ − 15°54′', opts: ['0′', '9′', '18′'], ans: 0,
+          why: '54 − 54 = 0，分正好减完，不用借位', done: '分相减为 0' },
+        { q: '度相减：36 − 15 = ?', expr: '36°54′ − 15°54′ = ?', opts: ['21°', '21°18′', '20°'], ans: 0,
+          why: '36 − 15 = 21，分是 0，所以结果是 21°' }
       ]
     }
   ];
@@ -255,7 +453,7 @@
     var lv = this.level();
     if (lv.kind === 'drag') this.deg = lv.start;
     else if (lv.kind === 'tap') this.deg = lv.deg;
-    else if (lv.kind === 'quiz') this.deg = lv.qs[0].deg;
+    else if (lv.kind === 'quiz') this.deg = lv.qs[0].deg != null ? lv.qs[0].deg : 45;
     else this.deg = 45;
 
     this.levelStartAt = this.t;
@@ -494,17 +692,33 @@
   };
 
   /* ---------- 判断类型 ---------- */
+  AngleGame.prototype.curOpts = function () {
+    var lv = this.level(), q = this.curQ();
+    return (q && q.opts) ? q.opts : (lv.opts || []);
+  };
   AngleGame.prototype.quizButtons = function () {
-    var w = (DW - 48 - 2 * 8) / 3, h = 40, y0 = 470;
-    var out = [];
-    for (var i = 0; i < 5; i++) {
+    var n = this.curOpts().length, h = 40, y0 = 470, out = [], i;
+    if (n <= 3) {
+      var bw = n === 1 ? 200 : (DW - 48 - (n - 1) * 8) / n;
+      var total = n * bw + (n - 1) * 8, x0 = (DW - total) / 2;
+      for (i = 0; i < n; i++) out.push({ i: i, x: x0 + i * (bw + 8), y: y0, w: bw, h: h });
+      return out;
+    }
+    if (n === 4) {
+      var w4 = (DW - 48 - 10) / 2, y4 = this.level().scene === 'expr' ? 452 : 470;
+      for (i = 0; i < 4; i++) {
+        out.push({ i: i, x: 24 + (i % 2) * (w4 + 10), y: y4 + Math.floor(i / 2) * (h + 10), w: w4, h: h });
+      }
+      return out;
+    }
+    var w3 = (DW - 48 - 2 * 8) / 3;
+    for (i = 0; i < n; i++) {
       var row = i < 3 ? 0 : 1;
       var col = i < 3 ? i : i - 3;
-      var n = row === 0 ? 3 : 2;
-      var ww = row === 0 ? w : (DW - 48 - 8) / 2;
-      var total = n * ww + (n - 1) * 8;
-      var x0 = (DW - total) / 2;
-      out.push({ i: i, x: x0 + col * (ww + 8), y: y0 + row * (h + 10), w: ww, h: h });
+      var cnt = row === 0 ? 3 : n - 3;
+      var ww = row === 0 ? w3 : (DW - 48 - 8) / Math.max(cnt, 1);
+      var tt = cnt * ww + (cnt - 1) * 8;
+      out.push({ i: i, x: (DW - tt) / 2 + col * (ww + 8), y: y0 + row * (h + 10), w: ww, h: h });
     }
     return out;
   };
@@ -545,7 +759,7 @@
   AngleGame.prototype.autoSolve = function () {
     var lv = this.level();
     if (lv.kind === 'drag') this.deg = lv.target;
-    else if (lv.kind === 'quiz') { this.qi = lv.qs.length - 1; this.deg = lv.qs[this.qi].deg; }
+    else if (lv.kind === 'quiz') { this.qi = lv.qs.length - 1; if (lv.qs[this.qi].deg != null) this.deg = lv.qs[this.qi].deg; }
     else if (lv.kind === 'multi') { for (var k = 0; k < lv.ans.length; k++) this.multiSel[lv.ans[k]] = true; }
     this.solve();
   };
@@ -573,6 +787,7 @@
   };
   AngleGame.prototype.overlayText = function () {
     var lv = this.level();
+    if (lv.answer) return { answer: lv.answer, note: lv.note || '' };
     if (lv.kind === 'drag') return { answer: '∠AOB = ' + lv.target + '°', note: lv.note || '' };
     if (lv.kind === 'quiz') return { answer: '锐角 · 直角 · 钝角 · 平角 · 周角', note: lv.note || '' };
     if (lv.kind === 'pick') return { answer: '两条射线 + 公共端点 = 角', note: lv.note || '' };
@@ -656,7 +871,7 @@
         this.solve();
       } else {
         this.qi++;
-        this.deg = lv.qs[this.qi].deg;
+        if (lv.qs[this.qi].deg != null) this.deg = lv.qs[this.qi].deg;
       }
     }
     if (this.doneAt && this.t >= this.doneAt) {
@@ -709,7 +924,7 @@
 
     ctx.fillStyle = PAL.ink3;
     ctx.font = font(11.5);
-    ctx.fillText('角的定义 · 五类角 · 角平分线', DW / 2, 94);
+    ctx.fillText('角的定义 · 五类角 · 度分秒换算', DW / 2, 94);
 
     var rows = this.menuRows();
     for (var i = 0; i < rows.length; i++) this.drawMenuRow(rows[i], i);
@@ -881,7 +1096,7 @@
     ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = PAL.ink3;
     ctx.font = font(10.5, 500);
-    ctx.fillText(lv.kind === 'quiz' ? '判断' : (lv.kind === 'multi' ? '多选' : '问题'), 40, 94);
+    ctx.fillText(lv.label || (lv.kind === 'quiz' ? '判断' : (lv.kind === 'multi' ? '多选' : '问题')), 40, 94);
 
     if (lv.kind === 'quiz') {
       ctx.textAlign = 'right';
@@ -1117,6 +1332,9 @@
     var ctx = this.ctx;
     var lv = this.level();
     var q = this.curQ();
+
+    if (lv.scene === 'expr') { this.drawExprScene(); return; }
+
     var savedDeg = this.deg;
     this.deg = q.deg;
 
@@ -1138,10 +1356,83 @@
 
     this.deg = savedDeg;
 
-    var btns = this.quizButtons();
-    for (var i = 0; i < btns.length; i++) this.drawOptButton(btns[i], lv.opts[i]);
+    var btns = this.quizButtons(), opts = this.curOpts();
+    for (var i = 0; i < btns.length; i++) this.drawOptButton(btns[i], opts[i]);
 
     var footer = { text: '判断它属于哪一类角', color: PAL.ink3 };
+    if (this.qWhy) footer = { text: this.qWhy, color: PAL.wrong };
+    else if (this.t - this.levelStartAt > GHOST_DELAY) footer = { text: lv.tip || '', color: PAL.ink3 };
+    this.drawFooter(footer);
+  };
+
+  /* ---------- 换算题场景：题面是算式，不是角 ---------- */
+  AngleGame.prototype.drawExprScene = function () {
+    var ctx = this.ctx;
+    var lv = this.level();
+    var q = this.curQ();
+    var top = 186, bot = 424;
+
+    rr(ctx, 24, top, DW - 48, bot - top, 16);
+    ctx.fillStyle = PAL.card;
+    ctx.fill();
+    ctx.strokeStyle = this.qFlash && this.qFlash.ok ? PAL.teal : PAL.rule;
+    ctx.lineWidth = this.qFlash && this.qFlash.ok ? 1.5 : 1;
+    ctx.stroke();
+
+    /* 大字算式 */
+    var text = q.expr || '';
+    var size = 30;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = PAL.ink;
+    ctx.font = font(size, 500);
+    while (ctx.measureText(text).width > DW - 86 && size > 16) {
+      size -= 2;
+      ctx.font = font(size, 500);
+    }
+    ctx.fillText(text, DW / 2, 254);
+
+    if (q.sub) {
+      ctx.fillStyle = PAL.ink3;
+      ctx.font = font(11.5);
+      ctx.fillText(q.sub, DW / 2, 284);
+    }
+
+    /* 已完成的步骤（本关是链式的，后一步要用前一步的结论） */
+    var lines = [], k;
+    for (k = 0; k < this.qi; k++) if (lv.qs[k].done) lines.push(lv.qs[k].done);
+    if (lines.length) {
+      ctx.strokeStyle = PAL.rule;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(46, 306);
+      ctx.lineTo(DW - 46, 306);
+      ctx.stroke();
+
+      ctx.textAlign = 'left';
+      ctx.fillStyle = PAL.ink3;
+      ctx.font = font(10, 500);
+      ctx.fillText('前面算出的', 46, 324);
+
+      for (k = 0; k < lines.length && k < 3; k++) {
+        ctx.fillStyle = PAL.teal;
+        ctx.beginPath();
+        ctx.arc(52, 342 + k * 22 - 4, 2.6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = PAL.teal;
+        ctx.font = font(12.5, 500);
+        ctx.fillText(lines[k], 62, 342 + k * 22);
+      }
+    } else {
+      ctx.fillStyle = PAL.ink3;
+      ctx.font = font(10.5);
+      ctx.fillText(lv.hintline || '一步一步来，先想想这一步算什么', DW / 2, 300);
+    }
+
+    var btns = this.quizButtons(), opts = this.curOpts();
+    for (var i = 0; i < btns.length; i++) this.drawOptButton(btns[i], opts[i]);
+
+    var footer = { text: '选一个正确答案', color: PAL.ink3 };
     if (this.qWhy) footer = { text: this.qWhy, color: PAL.wrong };
     else if (this.t - this.levelStartAt > GHOST_DELAY) footer = { text: lv.tip || '', color: PAL.ink3 };
     this.drawFooter(footer);

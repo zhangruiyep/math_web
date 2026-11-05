@@ -69,7 +69,7 @@
     if (q.has('qi') && game.level().qs) {
       var lvq = game.level(), qi0 = parseInt(q.get('qi'), 10) || 0;
       game.qi = Math.max(0, Math.min(lvq.qs.length - 1, qi0));
-      game.deg = lvq.qs[game.qi].deg;
+      if (lvq.qs[game.qi].deg != null) game.deg = lvq.qs[game.qi].deg;
     }
     if (q.get('wrong') === '1') {
       var lvw = game.level();
