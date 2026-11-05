@@ -1,5 +1,8 @@
 /* 角与角度 · 小游戏引擎
  * 与「绝对距离」同一套架构：375×667 设计坐标、等比缩放 letterbox、选关页 + 关卡内两态。
+ * 第一章：角的概念 —— 定义（两条射线 + 公共端点）、顶点与边、
+ *          锐角 / 直角 / 钝角 / 平角 / 周角。
+ * 题型 kind：pick（选图形）· tap（点顶点）· drag（转射线凑度数）· quiz（判断类型）
  * 浏览器与小程序共用：挂在 root.AngleGame，同时 module.exports。
  */
 (function (root) {
@@ -24,15 +27,15 @@
     star: '#DDA43A'
   };
 
-  /* 场景几何：顶点 O，射线 OA 固定水平向右，OB 可拖动 */
-  var O = { x: 172, y: 466 };
-  var R = 150;          // 射线长度
-  var ARC_R = 64;       // 角的弧半径
+  /* 场景几何：顶点 O，射线 OA 固定水平向右，OB 可绕 O 旋转 */
+  var O = { x: 172, y: 380 };
+  var R = 118;          // 射线长度
+  var ARC_R = 52;       // 角的弧半径
   var TOL = 1.5;        // 过关容差（度）
-  var GHOST_DELAY = 10; // 幽灵目标射线出现时间
+  var GHOST_DELAY = 10; // 幽灵目标出现时间
 
-  var CH_NAME = { 1: '角的度量', 2: '角的比较', 3: '角平分线', 4: '余角与补角' };
-  var CH_SUB = { 1: '张开多大，就是多少度', 2: '谁大谁小，比一比', 3: '把角分成两半', 4: '凑够 90° 和 180°' };
+  var CH_NAME = { 1: '角的概念', 2: '角的比较', 3: '角平分线', 4: '余角与补角' };
+  var CH_SUB = { 1: '顶点 · 两条边 · 五类角', 2: '谁大谁小，比一比', 3: '把角分成两半', 4: '凑够 90° 和 180°' };
   var CH_NUM = { 1: '一', 2: '二', 3: '三', 4: '四' };
 
   var CHAPTERS = [
@@ -42,13 +45,67 @@
     { ch: 4, ready: false }
   ];
 
-  /* 关卡：target 目标度数，start 初始度数 */
+  var TYPE_OPTS = ['锐角', '直角', '钝角', '平角', '周角'];
+
+  /* ---------------- 关卡 ---------------- */
   var LEVELS = [
-    { ch: 1, target: 60, start: 24, note: '比直角小的角叫锐角，60° 就是锐角' },
-    { ch: 1, target: 90, start: 32, note: '90° 是直角——两条边正好互相垂直' },
-    { ch: 1, target: 145, start: 40, note: '比直角大、比 180° 小的角叫钝角' }
+    /* 1. 角的定义：两条有公共端点的射线 */
+    {
+      ch: 1, kind: 'pick', q: '下面哪个图形是角？', ans: 0,
+      tip: '角 = 两条射线 + 一个公共端点',
+      note: '两条射线、一个公共端点，缺一不可',
+      figs: [{ kind: 'angle' }, { kind: 'loose' }, { kind: 'dotray' }],
+      why: { 1: '两条射线没有公共端点，不是角', 2: '只有一条射线，还差一条' }
+    },
+    /* 2. 顶点与边 */
+    {
+      ch: 1, kind: 'tap', q: '∠AOB 的顶点在哪？点一下', deg: 52, ans: 'O',
+      tip: '两条边的公共端点就是顶点',
+      note: '顶点 O，两条边是 OA 和 OB',
+      why: { A: 'A 在边上，不是顶点', B: 'B 也在边上，不是顶点' }
+    },
+    /* 3-7. 转射线：张开多大就是多少度 */
+    {
+      ch: 1, kind: 'drag', target: 45, start: 8,
+      tip: '张开不到 90° 就是锐角',
+      note: '小于 90° 的角叫锐角——越张越大，但仍然不到直角'
+    },
+    {
+      ch: 1, kind: 'drag', target: 90, start: 20,
+      tip: '两条边互相垂直，是直角',
+      note: '90° 是直角，直角的两条边互相垂直'
+    },
+    {
+      ch: 1, kind: 'drag', target: 135, start: 32,
+      tip: '过了直角、还没到直线，是钝角',
+      note: '大于 90° 而小于 180° 的角叫钝角'
+    },
+    {
+      ch: 1, kind: 'drag', target: 180, start: 62,
+      tip: '两条边成一条直线，是平角',
+      note: '平角的两条边在同一条直线上，正好 180°'
+    },
+    {
+      ch: 1, kind: 'drag', target: 360, start: 210,
+      tip: '绕 O 转一整圈，是周角',
+      note: '周角是射线绕端点旋转一周形成的角，两条边重合，360°'
+    },
+    /* 8. 判断类型 */
+    {
+      ch: 1, kind: 'quiz', q: '它是什么角？', opts: TYPE_OPTS,
+      tip: '先看度数，再定类型',
+      note: '锐角＜90°、直角＝90°、钝角在 90°~180° 之间、平角＝180°、周角＝360°',
+      qs: [
+        { deg: 32, ans: 0, why: '不到 90°，是锐角' },
+        { deg: 90, ans: 1, why: '正好 90°，是直角' },
+        { deg: 126, ans: 2, why: '超过 90° 但不到 180°，是钝角' },
+        { deg: 180, ans: 3, why: '两条边成一条直线，是平角' },
+        { deg: 360, ans: 4, why: '绕了一整圈回到原处，是周角' }
+      ]
+    }
   ];
 
+  /* ---------------- 小工具 ---------------- */
   function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
   function font(size, weight) {
     return (weight || 400) + ' ' + size + 'px "PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif';
@@ -88,6 +145,15 @@
     var c1 = 1.70158, c3 = c1 + 1;
     return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
   }
+  function classify(d) {
+    if (d < TOL) return '零角';
+    if (d < 90 - TOL) return '锐角';
+    if (d <= 90 + TOL) return '直角';
+    if (d < 180 - TOL) return '钝角';
+    if (d <= 180 + TOL) return '平角';
+    if (d < 360 - TOL) return '超过平角';
+    return '周角';
+  }
 
   var AC = null;
   function tone(freq, dur, vol) {
@@ -123,13 +189,14 @@
     } catch (e) {}
   }
 
+  /* ---------------- 主体 ---------------- */
   function AngleGame(ctx) {
     this.ctx = ctx;
     this.cw = DW; this.ch = DH;
     this.scale = 1; this.ox = 0; this.oy = 0;
     this.t = 0;
     this.index = 0;
-    this.deg = LEVELS[0].start;
+    this.deg = 45;
     this.mode = 'menu';
     this.dragging = false;
     this.solved = false;
@@ -138,9 +205,17 @@
     this.misses = 0;
     this.done = loadDone();
     this.pressed = -1;
-    this.toast = null;      // {text, at}
-    this.flash = null;      // {diff, at} 未命中时的差值提示
+    this.toast = null;
+    this.flash = null;
     this.resetAt = -1;
+    this.qi = 0;
+    this.qWrong = 0;
+    this.qFlash = null;
+    this.qWhy = '';
+    this.qNextAt = 0;
+    this.picked = -1;
+    this.pickBad = -1;
+    this.doneAt = 0;
     this.loadLevel(0);
     this.mode = 'menu';
   }
@@ -155,11 +230,20 @@
     return { x: (px - this.ox) / this.scale, y: (py - this.oy) / this.scale };
   };
   AngleGame.prototype.level = function () { return LEVELS[this.index]; };
+  AngleGame.prototype.curQ = function () {
+    var lv = this.level();
+    if (!lv.qs) return null;
+    return lv.qs[Math.min(this.qi, lv.qs.length - 1)];
+  };
 
   AngleGame.prototype.loadLevel = function (i) {
     this.index = clamp(i, 0, LEVELS.length - 1);
     var lv = this.level();
-    this.deg = lv.start;
+    if (lv.kind === 'drag') this.deg = lv.start;
+    else if (lv.kind === 'tap') this.deg = lv.deg;
+    else if (lv.kind === 'quiz') this.deg = lv.qs[0].deg;
+    else this.deg = 45;
+
     this.levelStartAt = this.t;
     this.solved = false;
     this.solvedAt = -1;
@@ -167,6 +251,14 @@
     this.misses = 0;
     this.dragging = false;
     this.flash = null;
+    this.qi = 0;
+    this.qWrong = 0;
+    this.qFlash = null;
+    this.qWhy = '';
+    this.qNextAt = 0;
+    this.picked = -1;
+    this.pickBad = -1;
+    this.doneAt = 0;
   };
 
   AngleGame.prototype.openMenu = function () {
@@ -179,7 +271,7 @@
     this.overlayAt = -1;
   };
 
-  /* ---------- 几何辅助 ---------- */
+  /* ---------- 几何 ---------- */
   AngleGame.prototype.bEnd = function () {
     var a = this.deg * Math.PI / 180;
     return { x: O.x + R * Math.cos(a), y: O.y - R * Math.sin(a) };
@@ -187,15 +279,6 @@
   AngleGame.prototype.ptAt = function (deg, rad) {
     var a = deg * Math.PI / 180;
     return { x: O.x + rad * Math.cos(a), y: O.y - rad * Math.sin(a) };
-  };
-  AngleGame.prototype.diff = function () { return this.level().target - this.deg; };
-  AngleGame.prototype.angleType = function () {
-    var d = this.deg;
-    if (d <= TOL) return '零角';
-    if (Math.abs(d - 90) <= TOL) return '直角';
-    if (d < 90) return '锐角';
-    if (d < 180 - TOL) return '钝角';
-    return '平角';
   };
 
   /* ---------- 输入 ---------- */
@@ -217,34 +300,51 @@
     }
     if (this.solved) return;
 
+    var lv = this.level();
+    if (lv.kind === 'drag') this.pointerDrag(type, p);
+    else if (lv.kind === 'quiz') this.pointerQuiz(type, p);
+    else if (lv.kind === 'pick') this.pointerPick(type, p);
+    else this.pointerTap(type, p);
+  };
+
+  /* ---------- 拖射线 ---------- */
+  AngleGame.prototype.pointerDrag = function (type, p) {
     if (type === 'down') {
       var b = this.bEnd();
       var dx = p.x - b.x, dy = p.y - b.y;
-      if (dx * dx + dy * dy <= 34 * 34) {
+      if (dx * dx + dy * dy <= 34 * 34 || this.onRay(p)) {
         this.dragging = true;
         this.moveTo(p);
         tone(600, 0.05, 0.02);
       }
       return;
     }
-    if (type === 'move') {
-      if (this.dragging) this.moveTo(p);
-      return;
-    }
+    if (type === 'move') { if (this.dragging) this.moveTo(p); return; }
     if (type === 'up') {
       if (!this.dragging) return;
       this.dragging = false;
       this.check();
     }
   };
-
+  AngleGame.prototype.onRay = function (p) {
+    var dx = p.x - O.x, dy = p.y - O.y;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 30 || dist > R + 26) return false;
+    var want = this.deg * Math.PI / 180;
+    var ang = Math.atan2(-dy, dx);
+    var d = Math.abs(ang - want);
+    while (d > Math.PI) d = Math.abs(d - 2 * Math.PI);
+    return d < 0.18;
+  };
   AngleGame.prototype.moveTo = function (p) {
     var dx = p.x - O.x, dy = O.y - p.y;
-    var a = Math.atan2(dy, dx) * 180 / Math.PI;
-    this.deg = clamp(Math.round(a), 0, 180);
+    var raw = Math.atan2(dy, dx) * 180 / Math.PI;
+    /* 展开到离当前角度最近的一圈，才能超过 180° 继续转 */
+    var base = raw;
+    while (base - this.deg > 180) base -= 360;
+    while (this.deg - base > 180) base += 360;
+    this.deg = clamp(Math.round(base), 0, 360);
   };
-
-  /* 只在松手时判过关 */
   AngleGame.prototype.check = function () {
     var lv = this.level();
     if (Math.abs(this.deg - lv.target) <= TOL) {
@@ -256,7 +356,106 @@
     }
   };
 
+  /* ---------- 选图形 ---------- */
+  AngleGame.prototype.pickBoxes = function () {
+    var w = 98, gap = 14, y = 214, h = 118;
+    var x0 = (DW - (3 * w + 2 * gap)) / 2;
+    var out = [];
+    for (var i = 0; i < 3; i++) out.push({ i: i, x: x0 + i * (w + gap), y: y, w: w, h: h });
+    return out;
+  };
+  AngleGame.prototype.pointerPick = function (type, p) {
+    if (type !== 'down' || this.doneAt) return;
+    var boxes = this.pickBoxes(), lv = this.level();
+    for (var i = 0; i < boxes.length; i++) {
+      var b = boxes[i];
+      if (p.x >= b.x - 4 && p.x <= b.x + b.w + 4 && p.y >= b.y - 4 && p.y <= b.y + b.h + 4) {
+        if (i === lv.ans) {
+          this.picked = i;
+          this.doneAt = this.t + 0.65;
+          tone(720, 0.09, 0.04);
+        } else {
+          this.pickBad = i;
+          this.misses++;
+          this.qWhy = (lv.why && lv.why[i]) || '';
+          tone(220, 0.12, 0.03);
+        }
+        return;
+      }
+    }
+  };
+
+  /* ---------- 点顶点 ---------- */
+  AngleGame.prototype.tapDots = function () {
+    var b = this.bEnd();
+    return [
+      { k: 'A', x: O.x + R, y: O.y },
+      { k: 'O', x: O.x, y: O.y },
+      { k: 'B', x: b.x, y: b.y }
+    ];
+  };
+  AngleGame.prototype.pointerTap = function (type, p) {
+    if (type !== 'down' || this.doneAt) return;
+    var lv = this.level(), dots = this.tapDots();
+    for (var i = 0; i < dots.length; i++) {
+      var d = dots[i];
+      var dx = p.x - d.x, dy = p.y - d.y;
+      if (dx * dx + dy * dy <= 26 * 26) {
+        if (d.k === lv.ans) {
+          this.picked = i;
+          this.doneAt = this.t + 0.6;
+          tone(720, 0.09, 0.04);
+        } else {
+          this.pickBad = i;
+          this.misses++;
+          this.qWhy = (lv.why && lv.why[d.k]) || '';
+          tone(220, 0.12, 0.03);
+        }
+        return;
+      }
+    }
+  };
+
+  /* ---------- 判断类型 ---------- */
+  AngleGame.prototype.quizButtons = function () {
+    var w = (DW - 48 - 2 * 8) / 3, h = 40, y0 = 470;
+    var out = [];
+    for (var i = 0; i < 5; i++) {
+      var row = i < 3 ? 0 : 1;
+      var col = i < 3 ? i : i - 3;
+      var n = row === 0 ? 3 : 2;
+      var ww = row === 0 ? w : (DW - 48 - 8) / 2;
+      var total = n * ww + (n - 1) * 8;
+      var x0 = (DW - total) / 2;
+      out.push({ i: i, x: x0 + col * (ww + 8), y: y0 + row * (h + 10), w: ww, h: h });
+    }
+    return out;
+  };
+  AngleGame.prototype.pointerQuiz = function (type, p) {
+    if (type !== 'down' || this.qNextAt) return;
+    var btns = this.quizButtons();
+    var q = this.curQ();
+    for (var i = 0; i < btns.length; i++) {
+      var b = btns[i];
+      if (p.x >= b.x - 3 && p.x <= b.x + b.w + 3 && p.y >= b.y - 3 && p.y <= b.y + b.h + 3) {
+        if (i === q.ans) {
+          this.qFlash = { ok: true, i: i };
+          this.qNextAt = this.t + 0.55;
+          tone(720, 0.09, 0.04);
+        } else {
+          this.qFlash = { ok: false, i: i };
+          this.qWrong++;
+          this.qWhy = q.why || '';
+          tone(220, 0.12, 0.03);
+        }
+        return;
+      }
+    }
+  };
+
+  /* ---------- 过关 ---------- */
   AngleGame.prototype.solve = function () {
+    if (this.solved) return;
     this.solved = true;
     this.solvedAt = this.t;
     this.overlayAt = this.t;
@@ -264,12 +463,12 @@
     this.done[this.index] = Math.max(this.done[this.index] || 0, n);
     saveDone(this.done);
     tone(720, 0.09, 0.04);
-    var self = this;
     setTimeout(function () { tone(960, 0.12, 0.035); }, 110);
-    return self;
   };
   AngleGame.prototype.autoSolve = function () {
-    this.deg = this.level().target;
+    var lv = this.level();
+    if (lv.kind === 'drag') this.deg = lv.target;
+    else if (lv.kind === 'quiz') { this.qi = lv.qs.length - 1; this.deg = lv.qs[this.qi].deg; }
     this.solve();
   };
   AngleGame.prototype.advance = function () {
@@ -277,21 +476,32 @@
     else this.loadLevel(this.index + 1);
   };
   AngleGame.prototype.starCount = function () {
+    var lv = this.level();
+    if (lv.kind === 'quiz') return this.qWrong === 0 ? 3 : (this.qWrong <= 2 ? 2 : 1);
     if (this.misses === 0) return 3;
-    if (this.misses <= 3) return 2;
+    if (this.misses <= 2) return 2;
     return 1;
   };
   AngleGame.prototype.verdict = function () {
-    var n = this.starCount();
-    if (n === 3) return { main: '太棒了！', sub: '一次就调准了' };
-    if (n === 2) return { main: '不错，有进步', sub: '多试几次，手感就来了' };
-    return { main: '过关了', sub: '角的大小只看张开多少，和边长无关' };
+    var n = this.starCount(), lv = this.level();
+    if (n === 3) {
+      return {
+        main: '太棒了！',
+        sub: lv.kind === 'drag' ? '一次就调准了' : (lv.kind === 'quiz' ? '每一问都判断对了' : '一眼就认准了')
+      };
+    }
+    if (n === 2) return { main: '不错，有进步', sub: '想清楚再动手，会更快' };
+    return { main: '过关了', sub: '角的大小只看张开多少，和边画多长无关' };
   };
   AngleGame.prototype.overlayText = function () {
     var lv = this.level();
-    return { answer: '∠AOB = ' + lv.target + '°', note: lv.note || '' };
+    if (lv.kind === 'drag') return { answer: '∠AOB = ' + lv.target + '°', note: lv.note || '' };
+    if (lv.kind === 'quiz') return { answer: '锐角 · 直角 · 钝角 · 平角 · 周角', note: lv.note || '' };
+    if (lv.kind === 'pick') return { answer: '两条射线 + 公共端点 = 角', note: lv.note || '' };
+    return { answer: '顶点 O · 边 OA 和 OB', note: lv.note || '' };
   };
 
+  /* ---------- 命中区 ---------- */
   AngleGame.prototype.hitBack = function (p) { return p.x >= 12 && p.x <= 80 && p.y >= 22 && p.y <= 60; };
   AngleGame.prototype.hitOverlayMenu = function (p) {
     return p.x >= DW / 2 - 46 && p.x <= DW / 2 + 46 && p.y >= 470 && p.y <= 505;
@@ -357,9 +567,27 @@
   };
 
   /* ---------- 帧 ---------- */
+  AngleGame.prototype.update = function () {
+    if (this.qNextAt && this.t >= this.qNextAt) {
+      var lv = this.level();
+      this.qNextAt = 0;
+      this.qFlash = null;
+      this.qWhy = '';
+      if (this.qi + 1 >= lv.qs.length) {
+        this.solve();
+      } else {
+        this.qi++;
+        this.deg = lv.qs[this.qi].deg;
+      }
+    }
+    if (this.doneAt && this.t >= this.doneAt) {
+      this.doneAt = 0;
+      this.solve();
+    }
+  };
   AngleGame.prototype.frame = function (dt) {
     this.t += dt;
-    if (this.solved && this.overlayAt < 0) this.overlayAt = this.t;
+    this.update();
     this.draw();
   };
 
@@ -377,9 +605,14 @@
       return;
     }
 
+    var lv = this.level();
     this.drawHeader();
     this.drawTopCard();
-    this.drawScene();
+    if (lv.kind === 'drag') this.drawDragScene();
+    else if (lv.kind === 'quiz') this.drawQuizScene();
+    else if (lv.kind === 'pick') this.drawPickScene();
+    else this.drawTapScene();
+
     if (this.solved) this.drawOverlay();
     ctx.restore();
   };
@@ -396,7 +629,7 @@
 
     ctx.fillStyle = PAL.ink3;
     ctx.font = font(11.5);
-    ctx.fillText('角 · 度 · 角平分线', DW / 2, 94);
+    ctx.fillText('角的定义 · 五类角 · 角平分线', DW / 2, 94);
 
     var rows = this.menuRows();
     for (var i = 0; i < rows.length; i++) this.drawMenuRow(rows[i], i);
@@ -441,7 +674,6 @@
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // 章节序号
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = dim ? PAL.ghost : PAL.teal;
@@ -507,96 +739,108 @@
     ctx.fillText('第 ' + (this.index + 1) + ' / ' + LEVELS.length + ' 关', 349, 45);
   };
 
-  /* ---------- 目标卡 + 实时读数 ---------- */
   AngleGame.prototype.drawTopCard = function () {
     var ctx = this.ctx;
     var lv = this.level();
-    var dif = Math.abs(this.deg - lv.target);
-    var near = dif <= 4, hit = dif <= TOL;
 
-    rr(ctx, 24, 72, DW - 48, 86, 16);
+    if (lv.kind === 'drag') {
+      var dif = Math.abs(this.deg - lv.target);
+      var hit = dif <= TOL;
+      rr(ctx, 24, 70, DW - 48, 102, 16);
+      ctx.fillStyle = PAL.card;
+      ctx.fill();
+      ctx.strokeStyle = hit ? PAL.teal : PAL.rule;
+      ctx.lineWidth = hit ? 1.6 : 1;
+      ctx.stroke();
+
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = PAL.ink3;
+      ctx.font = font(10.5, 500);
+      ctx.fillText('目标', 40, 94);
+
+      ctx.fillStyle = PAL.ink;
+      ctx.font = font(20, 500);
+      ctx.fillText('∠AOB = ' + lv.target + '°', 40, 122);
+
+      ctx.textAlign = 'right';
+      ctx.fillStyle = PAL.ink3;
+      ctx.font = font(10.5, 500);
+      ctx.fillText('当前', DW - 40, 94);
+
+      ctx.fillStyle = hit ? PAL.teal : (dif <= 6 ? PAL.amber : PAL.ink);
+      ctx.font = font(20, 500);
+      ctx.fillText(this.deg + '°', DW - 40, 122);
+
+      var tag = classify(this.deg);
+      ctx.font = font(9.5, 500);
+      var tw = ctx.measureText(tag).width + 14;
+      ctx.textAlign = 'center';
+      rr(ctx, DW - 40 - tw, 129, tw, 16, 8);
+      ctx.fillStyle = hit ? PAL.tealBg : PAL.bg;
+      ctx.fill();
+      ctx.fillStyle = hit ? PAL.teal : PAL.ink3;
+      ctx.fillText(tag, DW - 40 - tw / 2, 140);
+
+      ctx.textAlign = 'left';
+      ctx.fillStyle = PAL.ink3;
+      ctx.font = font(10.5);
+      ctx.fillText(lv.tip || '', 40, 158);
+      return;
+    }
+
+    /* 判断题 / 选择题：卡里放问题 */
+    rr(ctx, 24, 70, DW - 48, 96, 16);
     ctx.fillStyle = PAL.card;
     ctx.fill();
-    ctx.strokeStyle = hit ? PAL.teal : PAL.rule;
-    ctx.lineWidth = hit ? 1.6 : 1;
+    ctx.strokeStyle = PAL.rule;
+    ctx.lineWidth = 1;
     ctx.stroke();
 
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = PAL.ink3;
     ctx.font = font(10.5, 500);
-    ctx.fillText('目标', 40, 96);
+    ctx.fillText(lv.kind === 'quiz' ? '判断' : '问题', 40, 94);
+
+    if (lv.kind === 'quiz') {
+      ctx.textAlign = 'right';
+      ctx.fillStyle = PAL.ink3;
+      ctx.font = font(10.5);
+      ctx.fillText('第 ' + (this.qi + 1) + ' / ' + lv.qs.length + ' 问', DW - 40, 94);
+      ctx.textAlign = 'left';
+    }
 
     ctx.fillStyle = PAL.ink;
-    ctx.font = font(21, 500);
-    ctx.fillText('∠AOB = ' + lv.target + '°', 40, 126);
+    ctx.font = font(17, 500);
+    this.wrap(lv.q, 40, 120, DW - 80, 22);
 
-    // 右侧：实时读数 + 角的类型
-    ctx.textAlign = 'right';
     ctx.fillStyle = PAL.ink3;
-    ctx.font = font(10.5, 500);
-    ctx.fillText('当前', DW - 40, 96);
-
-    ctx.fillStyle = hit ? PAL.teal : (near ? PAL.amber : PAL.ink);
-    ctx.font = font(21, 500);
-    ctx.fillText(this.deg + '°', DW - 40, 126);
-
-    // 类型标签
-    var tag = this.angleType();
-    ctx.font = font(10, 500);
-    var tw = ctx.measureText(tag).width + 16;
-    ctx.textAlign = 'center';
-    rr(ctx, DW - 40 - tw, 134, tw, 17, 8.5);
-    ctx.fillStyle = hit ? PAL.tealBg : PAL.bg;
-    ctx.fill();
-    ctx.fillStyle = hit ? PAL.teal : PAL.ink3;
-    ctx.fillText(tag, DW - 40 - tw / 2, 146);
+    ctx.font = font(10.5);
+    ctx.fillText(lv.tip || '', 40, 154);
   };
 
-  /* ---------- 场景 ---------- */
-  AngleGame.prototype.drawScene = function () {
-    var ctx = this.ctx;
-    var lv = this.level();
-    var ga = clamp((this.t - this.levelStartAt - GHOST_DELAY) / 0.6, 0, 1);
-
-    // 刻度圈：每 15° 一个小刻度，30° 的略长
-    var i, a, p1, p2;
-    for (i = 0; i <= 180; i += 15) {
-      a = i === 0 || i === 180;
-      p1 = this.ptAt(i, R + 4);
-      p2 = this.ptAt(i, R + (a ? 12 : (i % 30 === 0 ? 11 : 7)));
+  /* ---------- 刻度圈 / 通用 ---------- */
+  AngleGame.prototype.drawTicks = function () {
+    var ctx = this.ctx, i, p1, p2;
+    for (i = 0; i <= 360; i += 15) {
+      var long = (i % 45 === 0);
+      p1 = this.ptAt(i, R + 5);
+      p2 = this.ptAt(i, R + (long ? 13 : 9));
       ctx.beginPath();
       ctx.moveTo(p1.x, p1.y);
       ctx.lineTo(p2.x, p2.y);
-      ctx.strokeStyle = PAL.rule;
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = long ? PAL.ghost : PAL.rule;
+      ctx.lineWidth = long ? 1.4 : 1;
       ctx.stroke();
     }
+  };
 
-    // 幽灵目标射线（10 秒后出现）
-    if (ga > 0) {
-      ctx.save();
-      ctx.globalAlpha = ga * 0.9;
-      var gt = this.ptAt(lv.target, R);
-      ctx.setLineDash([5, 5]);
-      ctx.strokeStyle = PAL.ghost;
-      ctx.lineWidth = 1.6;
-      ctx.beginPath();
-      ctx.moveTo(O.x, O.y);
-      ctx.lineTo(gt.x, gt.y);
-      ctx.stroke();
-      ctx.setLineDash([]);
+  AngleGame.prototype.drawRays = function (opts) {
+    var ctx = this.ctx;
+    opts = opts || {};
+    var b = this.bEnd();
 
-      var gl = this.ptAt(lv.target, R + 26);
-      ctx.fillStyle = PAL.ink3;
-      ctx.font = font(10.5, 500);
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('目标 ' + lv.target + '°', gl.x, gl.y);
-      ctx.restore();
-    }
-
-    // 射线 OA（固定）
     ctx.strokeStyle = PAL.ink;
     ctx.lineWidth = 2.2;
     ctx.lineCap = 'round';
@@ -605,8 +849,6 @@
     ctx.lineTo(O.x + R, O.y);
     ctx.stroke();
 
-    // 射线 OB（可拖）
-    var b = this.bEnd();
     ctx.strokeStyle = PAL.teal;
     ctx.lineWidth = 2.2;
     ctx.beginPath();
@@ -615,66 +857,150 @@
     ctx.stroke();
     ctx.lineCap = 'butt';
 
-    // 角弧
-    var mid = this.deg / 2;
+    /* 旋转方向：说明「角是转出来的」 */
+    if (opts.sweep !== false && this.deg > 12) {
+      var rr2 = R * 0.62;
+      ctx.save();
+      ctx.globalAlpha = 0.5;
+      ctx.strokeStyle = PAL.teal;
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath();
+      ctx.arc(O.x, O.y, rr2, 0, -this.deg * Math.PI / 180, true);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      var tip = this.ptAt(this.deg, rr2);
+      var dir = this.deg * Math.PI / 180;
+      ctx.beginPath();
+      ctx.moveTo(tip.x - 6 * Math.cos(dir - 0.5), tip.y + 6 * Math.sin(dir - 0.5));
+      ctx.lineTo(tip.x, tip.y);
+      ctx.lineTo(tip.x - 6 * Math.cos(dir + 0.5), tip.y + 6 * Math.sin(dir + 0.5));
+      ctx.stroke();
+      ctx.restore();
+    }
+  };
+
+  AngleGame.prototype.drawAngleArc = function (opts) {
+    var ctx = this.ctx;
+    opts = opts || {};
     ctx.beginPath();
-    ctx.arc(O.x, O.y, ARC_R, 0, -this.deg * Math.PI / 180, true);
-    ctx.strokeStyle = this.t < this.levelStartAt + 1 ? PAL.ink3 : PAL.ink;
+    ctx.arc(O.x, O.y, opts.r || ARC_R, 0, -this.deg * Math.PI / 180, true);
+    ctx.strokeStyle = opts.color || PAL.ink;
     ctx.lineWidth = 1.8;
     ctx.stroke();
 
-    // 弧上的度数
-    var lab = this.ptAt(mid, ARC_R + 22);
-    ctx.fillStyle = PAL.ink;
-    ctx.font = font(15, 500);
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(this.deg + '°', lab.x, lab.y);
+    if (opts.label !== false) {
+      var mid = this.deg / 2;
+      var lab = this.ptAt(mid, (opts.r || ARC_R) + 20);
+      ctx.fillStyle = opts.color || PAL.ink;
+      ctx.font = font(15, 500);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(this.deg + '°', lab.x, lab.y);
+    }
+  };
 
-    // 顶点与字母
+  AngleGame.prototype.drawVertex = function (opts) {
+    var ctx = this.ctx;
+    opts = opts || {};
     ctx.beginPath();
     ctx.arc(O.x, O.y, 6, 0, Math.PI * 2);
     ctx.fillStyle = PAL.ink;
     ctx.fill();
-    ctx.font = font(13.5, 500);
-    ctx.fillStyle = PAL.ink;
-    ctx.fillText('O', O.x - 16, O.y + 18);
+    if (opts.labels !== false) {
+      ctx.font = font(13.5, 500);
+      ctx.fillStyle = PAL.ink;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('O', O.x + 17, O.y + 24);
+      ctx.fillText('A', O.x + R + 14, O.y + 6);
+    }
+  };
 
-    ctx.fillText('A', O.x + R + 14, O.y + 5);
-
-    // B 手柄
-    var activeH = this.dragging;
+  AngleGame.prototype.drawRightMark = function () {
+    if (Math.abs(this.deg - 90) > TOL) return;
+    var ctx = this.ctx, s = 13;
+    ctx.strokeStyle = PAL.ink3;
+    ctx.lineWidth = 1.3;
     ctx.beginPath();
-    ctx.arc(b.x, b.y, activeH ? 19 : 17, 0, Math.PI * 2);
+    ctx.moveTo(O.x + s, O.y);
+    ctx.lineTo(O.x + s, O.y - s);
+    ctx.lineTo(O.x, O.y - s);
+    ctx.stroke();
+  };
+
+  /* ---------- 拖射线场景 ---------- */
+  AngleGame.prototype.drawDragScene = function () {
+    var ctx = this.ctx;
+    var lv = this.level();
+    var ga = clamp((this.t - this.levelStartAt - GHOST_DELAY) / 0.6, 0, 1);
+
+    this.drawTicks();
+
+    if (ga > 0) {
+      ctx.save();
+      ctx.globalAlpha = ga * 0.95;
+      ctx.setLineDash([5, 5]);
+      ctx.strokeStyle = PAL.ghost;
+      ctx.lineWidth = 1.6;
+      if (lv.target >= 359) {
+        ctx.beginPath();
+        ctx.arc(O.x, O.y, R * 0.84, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = PAL.ink3;
+        ctx.font = font(10.5, 500);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('绕一整圈', O.x, O.y - R * 0.84 - 12);
+      } else {
+        var gt = this.ptAt(lv.target, R);
+        ctx.beginPath();
+        ctx.moveTo(O.x, O.y);
+        ctx.lineTo(gt.x, gt.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        var gl = this.ptAt(lv.target, R + 26);
+        ctx.fillStyle = PAL.ink3;
+        ctx.font = font(10.5, 500);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('目标 ' + lv.target + '°', gl.x, gl.y);
+      }
+      ctx.restore();
+    }
+
+    this.drawRays();
+    this.drawAngleArc();
+    this.drawRightMark();
+    this.drawVertex();
+
+    var b = this.bEnd();
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, this.dragging ? 15 : 13, 0, Math.PI * 2);
     ctx.fillStyle = PAL.teal;
     ctx.fill();
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = font(13, 500);
-    ctx.fillText('B', b.x, b.y + 1);
+    ctx.font = font(11.5, 500);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('B', b.x, b.y + 0.5);
 
-    // 拖动提示：手柄外一段双向弧箭头，第一次进关时闪
     if (!this.solved && this.misses === 0 && !this.dragging) {
       var pul = 0.55 + 0.45 * Math.sin(this.t * 3);
       ctx.save();
-      ctx.globalAlpha = 0.35 + 0.35 * pul;
+      ctx.globalAlpha = 0.3 + 0.3 * pul;
       ctx.strokeStyle = PAL.teal;
       ctx.lineWidth = 1.4;
-      ctx.setLineDash([3, 4]);
+      ctx.setLineDash([3, 5]);
       ctx.beginPath();
-      ctx.arc(O.x, O.y, R + 20, -0.02 * Math.PI, -0.5 * Math.PI - 0.02 * Math.PI, true);
+      ctx.arc(O.x, O.y, R + 22, -0.03 * Math.PI, -0.55 * Math.PI, true);
       ctx.stroke();
       ctx.setLineDash([]);
       ctx.restore();
     }
 
-    // 底部提示
-    var hintY = 578;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'alphabetic';
-    var hint = this.footerHint();
-    ctx.fillStyle = hint.color;
-    ctx.font = font(11.5, 500);
-    this.wrapCenter(hint.text, DW / 2, hintY, DW - 56, 16);
+    this.drawFooter(this.footerHint());
   };
 
   AngleGame.prototype.footerHint = function () {
@@ -683,15 +1009,185 @@
     if (this.flash && this.t - this.flash.at < 1.6) {
       var d = Math.max(1, Math.round(Math.abs(this.flash.diff)));
       return {
-        text: this.flash.diff > 0 ? ('张得太开了 · 收回 ' + d + '°') : ('还差 ' + d + '° · 再张开一点'),
+        text: this.flash.diff > 0 ? ('转多了 · 收回 ' + d + '°') : ('还差 ' + d + '° · 接着张开'),
         color: PAL.wrong
       };
     }
     if (dif <= TOL) return { text: '正好！松开手就过关', color: PAL.teal };
     if (this.t - this.levelStartAt > GHOST_DELAY) {
-      return { text: '把 B 点往虚线那边转 ' + Math.round(dif) + '°', color: PAL.ink3 };
+      return { text: '往虚线方向转 ' + Math.round(dif) + '°', color: PAL.ink3 };
     }
-    return { text: '拖动 B 点，改变角张开的大小', color: PAL.ink3 };
+    return {
+      text: lv.target >= 359 ? '拖动 B 点，绕 O 转一整圈' : '拖动 B 点（绿色边上的圆点）改变张开大小',
+      color: PAL.ink3
+    };
+  };
+
+  AngleGame.prototype.drawFooter = function (hint) {
+    var ctx = this.ctx;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = hint.color;
+    ctx.font = font(11.5, 500);
+    this.wrapCenter(hint.text, DW / 2, 578, DW - 56, 16);
+  };
+
+  /* ---------- 判断类型场景 ---------- */
+  AngleGame.prototype.drawQuizScene = function () {
+    var ctx = this.ctx;
+    var lv = this.level();
+    var q = this.curQ();
+    var savedDeg = this.deg;
+    this.deg = q.deg;
+
+    this.drawTicks();
+    this.drawRays({ sweep: false });
+    this.drawAngleArc({ label: false });
+    this.drawRightMark();
+    this.drawVertex();
+
+    if (q.deg >= 359) {
+      ctx.save();
+      ctx.strokeStyle = PAL.teal;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(O.x, O.y, R * 0.62, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    this.deg = savedDeg;
+
+    var btns = this.quizButtons();
+    for (var i = 0; i < btns.length; i++) this.drawOptButton(btns[i], lv.opts[i]);
+
+    var footer = { text: '判断它属于哪一类角', color: PAL.ink3 };
+    if (this.qWhy) footer = { text: this.qWhy, color: PAL.wrong };
+    else if (this.t - this.levelStartAt > GHOST_DELAY) footer = { text: lv.tip || '', color: PAL.ink3 };
+    this.drawFooter(footer);
+  };
+
+  AngleGame.prototype.drawOptButton = function (b, label) {
+    var ctx = this.ctx;
+    var f = this.qFlash, state = 0;
+    if (f && f.i === b.i) state = f.ok ? 1 : 2;
+
+    rr(ctx, b.x, b.y, b.w, b.h, 12);
+    ctx.fillStyle = state === 1 ? PAL.teal : (state === 2 ? PAL.wrongBg : PAL.card);
+    ctx.fill();
+    ctx.strokeStyle = state === 1 ? PAL.teal : (state === 2 ? PAL.wrong : PAL.rule);
+    ctx.lineWidth = state ? 1.6 : 1;
+    ctx.stroke();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = state === 1 ? '#FFFFFF' : (state === 2 ? PAL.wrong : PAL.ink);
+    ctx.font = font(14, 500);
+    ctx.fillText(label, b.x + b.w / 2, b.y + b.h / 2 + 0.5);
+  };
+
+  /* ---------- 选图形场景 ---------- */
+  AngleGame.prototype.drawPickScene = function () {
+    var lv = this.level();
+    var boxes = this.pickBoxes();
+
+    for (var i = 0; i < boxes.length; i++) {
+      var b = boxes[i];
+      var state = 0;
+      if (i === this.picked) state = 1;
+      else if (i === this.pickBad) state = 2;
+
+      rr(this.ctx, b.x, b.y, b.w, b.h, 14);
+      this.ctx.fillStyle = state === 1 ? PAL.tealBg : PAL.card;
+      this.ctx.fill();
+      this.ctx.strokeStyle = state === 1 ? PAL.teal : (state === 2 ? PAL.wrong : PAL.rule);
+      this.ctx.lineWidth = state ? 1.8 : 1;
+      this.ctx.stroke();
+
+      this.drawFig(lv.figs[i].kind, b, state === 2);
+    }
+
+    if (this.qWhy) this.drawFooter({ text: this.qWhy, color: PAL.wrong });
+    else this.drawFooter({ text: '点一下你认为是角的那个图形', color: PAL.ink3 });
+  };
+
+  AngleGame.prototype.drawFig = function (kind, b, bad) {
+    var ctx = this.ctx;
+    var line = bad ? PAL.wrong : PAL.ink;
+    var x = b.x, y = b.y;
+
+    ctx.strokeStyle = line;
+    ctx.fillStyle = line;
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+
+    if (kind === 'angle') {
+      var vx = x + 49, vy = y + 90;
+      ctx.beginPath();
+      ctx.moveTo(vx, vy);
+      ctx.lineTo(x + 18, y + 40);
+      ctx.moveTo(vx, vy);
+      ctx.lineTo(x + 82, y + 46);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(vx, vy, 3.4, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (kind === 'loose') {
+      ctx.beginPath();
+      ctx.moveTo(x + 26, y + 94);
+      ctx.lineTo(x + 26, y + 48);
+      ctx.moveTo(x + 58, y + 34);
+      ctx.lineTo(x + 80, y + 68);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x + 26, y + 94, 3, 0, Math.PI * 2);
+      ctx.arc(x + 58, y + 34, 3, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.arc(x + 38, y + 86, 3.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(x + 54, y + 58);
+      ctx.lineTo(x + 80, y + 30);
+      ctx.stroke();
+    }
+    ctx.lineCap = 'butt';
+  };
+
+  /* ---------- 点顶点场景 ---------- */
+  AngleGame.prototype.drawTapScene = function () {
+    var ctx = this.ctx;
+    var dots = this.tapDots();
+
+    this.drawTicks();
+    this.drawRays({ sweep: false });
+    this.drawAngleArc();
+    this.drawVertex({ labels: false });
+
+    for (var i = 0; i < dots.length; i++) {
+      var d = dots[i];
+      var state = 0;
+      if (i === this.picked) state = 1;
+      else if (i === this.pickBad) state = 2;
+
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, 13, 0, Math.PI * 2);
+      ctx.fillStyle = state === 1 ? PAL.tealBg : (state === 2 ? PAL.wrongBg : PAL.card);
+      ctx.fill();
+      ctx.strokeStyle = state === 1 ? PAL.teal : (state === 2 ? PAL.wrong : PAL.ink3);
+      ctx.lineWidth = state ? 1.8 : 1.2;
+      ctx.stroke();
+
+      ctx.fillStyle = state === 1 ? PAL.teal : (state === 2 ? PAL.wrong : PAL.ink);
+      ctx.font = font(12.5, 500);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(d.k, d.x, d.y + 0.5);
+    }
+
+    if (this.qWhy) this.drawFooter({ text: this.qWhy, color: PAL.wrong });
+    else this.drawFooter({ text: '顶点是两条边共用的那个点', color: PAL.ink3 });
   };
 
   /* ---------- 结算 ---------- */
@@ -746,7 +1242,7 @@
 
     ctx.fillStyle = PAL.ink3;
     ctx.font = font(11.5);
-    this.wrap(t.note, DW / 2, y + 180, 300, 16);
+    this.wrap(t.note, DW / 2, y + 182, 300, 15);
 
     rr(ctx, DW / 2 - 78, y + h - 56, 156, 40, 20);
     ctx.fillStyle = PAL.ink;
