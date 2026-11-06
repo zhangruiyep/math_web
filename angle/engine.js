@@ -828,6 +828,22 @@
   };
   AngleGame.prototype.quizButtons = function () {
     var n = this.curOpts().length, h = 40, y0 = 470, out = [], i;
+    // 测量最长选项文字，放不下就改成竖排（一行一个，占满宽度）
+    var ctx = this.ctx;
+    ctx.font = font(14, 500);
+    var maxW = 0;
+    var opts = this.curOpts();
+    for (i = 0; i < n; i++) maxW = Math.max(maxW, ctx.measureText(opts[i]).width);
+    var stack = false;
+    if (n <= 3 && maxW > (DW - 48 - (n - 1) * 8) / n - 14) stack = true;
+    if (n === 4 && maxW > (DW - 48 - 10) / 2 - 14) stack = true;
+    if (stack) {
+      var sh = 38, gap = 8;
+      // 整块底部对齐到 570（footer 在 578），同时不高于 420
+      var sy = Math.max(420, 560 - (n * (sh + gap) - gap));
+      for (i = 0; i < n; i++) out.push({ i: i, x: 24, y: sy + i * (sh + gap), w: DW - 48, h: sh });
+      return out;
+    }
     if (n <= 3) {
       var bw = n === 1 ? 200 : (DW - 48 - (n - 1) * 8) / n;
       var total = n * bw + (n - 1) * 8, x0 = (DW - total) / 2;
