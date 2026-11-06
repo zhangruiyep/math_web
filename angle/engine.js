@@ -1527,6 +1527,15 @@
     ctx.lineWidth = this.qFlash && this.qFlash.ok ? 1.5 : 1;
     ctx.stroke();
 
+    /* 这一问的问题文字（算式场景没它选项就没有上下文） */
+    if (q.q) {
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = PAL.ink;
+      ctx.font = font(14, 500);
+      ctx.fillText(q.q, DW / 2, 218);
+    }
+
     /* 大字算式 */
     var text = q.expr || '';
     var size = 30;
