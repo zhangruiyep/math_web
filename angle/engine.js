@@ -1596,7 +1596,7 @@
   };
 
   /* ---------- 图形绘制（第三章 数角） ---------- */
-  AngleGame.prototype.drawFigure = function (key, x, y, w, h) {
+  AngleGame.prototype.drawFigure = function (key, x, y, w, h, hi) {
     var ctx = this.ctx;
     var fig = FIGS[key];
     if (!fig) return;
@@ -1621,16 +1621,28 @@
       ctx.stroke();
     }
     ctx.lineCap = 'butt';
-    ctx.fillStyle = PAL.ink;
     for (k in fig.pts) {
       var pt = P(fig.pts[k]);
+      var isHi = hi && k === hi;
+      ctx.fillStyle = isHi ? PAL.teal : PAL.ink;
       ctx.beginPath();
-      ctx.arc(pt.x, pt.y, 2.6, 0, Math.PI * 2);
+      ctx.arc(pt.x, pt.y, isHi ? 4.2 : 2.6, 0, Math.PI * 2);
       ctx.fill();
+      if (isHi) {
+        ctx.strokeStyle = PAL.teal;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 8, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.lineWidth = 2;
+      }
+      ctx.fillStyle = isHi ? PAL.teal : PAL.ink;
       ctx.font = font(13, 500);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(k, pt.x + fig.pts[k].dx, pt.y + fig.pts[k].dy);
+      var lx = isHi ? fig.pts[k].dx * 1.7 : fig.pts[k].dx;
+      var ly = isHi ? fig.pts[k].dy * 1.7 : fig.pts[k].dy;
+      ctx.fillText(k, pt.x + lx, pt.y + ly);
     }
   };
 
@@ -1767,14 +1779,27 @@
   AngleGame.prototype.drawFigQuizScene = function () {
     var ctx = this.ctx;
     var lv = this.level();
+    var q = this.curQ();
 
-    rr(ctx, 24, 186, DW - 48, 234, 16);
+    rr(ctx, 24, 186, DW - 48, 210, 16);
     ctx.fillStyle = PAL.card;
     ctx.fill();
     ctx.strokeStyle = PAL.rule;
     ctx.lineWidth = 1;
     ctx.stroke();
-    this.drawFigure(lv.fig, 34, 196, DW - 68, 214);
+    /* 问哪个顶点就高亮哪个点 */
+    var hi = null, mHi = q.q && q.q.match(/以 ([A-Z]) 为顶点/);
+    if (mHi) hi = mHi[1];
+    this.drawFigure(lv.fig, 34, 196, DW - 68, 190, hi);
+
+    /* 这一问的问题文字（不画出来就不知道在数哪个顶点） */
+    if (q.q) {
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = PAL.ink;
+      ctx.font = font(14.5, 500);
+      ctx.fillText(q.q, DW / 2, 424);
+    }
 
     var btns = this.quizButtons(), opts = this.curOpts();
     for (var i = 0; i < btns.length; i++) this.drawOptButton(btns[i], opts[i]);
