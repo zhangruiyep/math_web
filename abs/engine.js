@@ -2480,14 +2480,30 @@
     var q = lv.qs[Math.min(this.quizQi, lv.qs.length - 1)];
     if (!q) return [];
     var out = [], i;
+    var startY = q.opts.length <= 2 ? 232 : 228;
+    this.quizTrailCompressed = false;
+    if (lv.chain) {
+      /* 结论标签占了几行就给按钮让多少位；放不下就压缩标签 */
+      var L = this.quizTrailLayout(false);
+      if (L) {
+        var blockH = q.opts.length > 2 ? (q.opts.length - 1) * 50 + 42 : 58;
+        var bottom = L.y0 + L.rows.length * L.rowH;
+        if (bottom + 12 + blockH > QUIZ_AXIS_Y - 14) {
+          L = this.quizTrailLayout(true);
+          bottom = L.y0 + L.rows.length * L.rowH;
+          this.quizTrailCompressed = true;
+        }
+        startY = clamp(bottom + 12, 228, 272);
+      }
+    }
     if (q.opts.length <= 2) {
       var w = (DW - 52 - 14) / 2;
       for (i = 0; i < q.opts.length; i++) {
-        out.push({ i: i, x: 26 + i * (w + 14), y: 232, w: w, h: 58 });
+        out.push({ i: i, x: 26 + i * (w + 14), y: startY, w: w, h: 58 });
       }
     } else {
       for (i = 0; i < q.opts.length; i++) {
-        out.push({ i: i, x: 26, y: 228 + i * 50, w: DW - 52, h: 42 });
+        out.push({ i: i, x: 26, y: startY + i * 50, w: DW - 52, h: 42 });
       }
     }
     return out;
@@ -2567,54 +2583,69 @@
   };
 
   /* 链式关卡：把已答出的结论做成一排小标签，一直留在屏幕上 */
-  BoundGame.prototype.drawQuizTrail = function (qi) {
+  /* 布局计算（绘制与按钮让位共用）；compress 时整体压缩一行的高度 */
+  BoundGame.prototype.quizTrailLayout = function (compress) {
     var ctx = this.ctx;
     var lv = this.level();
+    var qi = Math.min(this.quizQi, lv.qs.length - 1);
     var items = [], i;
     for (i = 0; i < qi; i++) {
       var d = lv.qs[i] && lv.qs[i].done;
       if (d) items.push(d);
     }
-    if (!items.length) return;
+    if (!items.length) return null;
 
-    var maxW = DW - 52, gap = 6, rowH = 21, y0 = 183, chipH = 18, pad = 9;
+    var maxW = DW - 52, gap = 6;
+    var L = compress
+      ? { y0: 176, rowH: 18, chipH: 15, fs: 10, pad: 8 }
+      : { y0: 183, rowH: 21, chipH: 18, fs: 10.5, pad: 9 };
     var rows = [], row = [], wRow = 0;
-    ctx.font = font(10.5, 500);
+    ctx.font = font(L.fs, 500);
     for (i = 0; i < items.length; i++) {
-      var cw = Math.min(maxW, ctx.measureText(items[i]).width + pad * 2 + 7); // + 圆点占位
+      var cw = Math.min(maxW, ctx.measureText(items[i]).width + L.pad * 2 + 7); // + 圆点占位
       if (row.length && wRow + gap + cw > maxW) { rows.push(row); row = []; wRow = 0; }
       row.push({ t: items[i], w: cw });
       wRow += (row.length > 1 ? gap : 0) + cw;
     }
     if (row.length) rows.push(row);
+    L.rows = rows;
+    L.gap = gap;
+    L.maxW = maxW;
+    return L;
+  };
+
+  BoundGame.prototype.drawQuizTrail = function (compress) {
+    var ctx = this.ctx;
+    var L = this.quizTrailLayout(compress);
+    if (!L) return;
 
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    for (var r = 0; r < rows.length; r++) {
+    for (var r = 0; r < L.rows.length; r++) {
       var total = 0, j;
-      for (j = 0; j < rows[r].length; j++) total += rows[r][j].w + (j ? gap : 0);
-      var x = (DW - total) / 2, y = y0 + r * rowH;
-      for (j = 0; j < rows[r].length; j++) {
-        var it = rows[r][j];
-        rr(ctx, x, y, it.w, chipH, chipH / 2);
+      for (j = 0; j < L.rows[r].length; j++) total += L.rows[r][j].w + (j ? L.gap : 0);
+      var x = (DW - total) / 2, y = L.y0 + r * L.rowH;
+      for (j = 0; j < L.rows[r].length; j++) {
+        var it = L.rows[r][j];
+        rr(ctx, x, y, it.w, L.chipH, L.chipH / 2);
         ctx.fillStyle = PAL.tealBg;
         ctx.fill();
 
         ctx.beginPath();
-        ctx.arc(x + pad + 1.5, y + chipH / 2, 2, 0, Math.PI * 2);
+        ctx.arc(x + L.pad + 1.5, y + L.chipH / 2, 2, 0, Math.PI * 2);
         ctx.fillStyle = PAL.teal;
         ctx.fill();
 
         ctx.fillStyle = PAL.teal;
-        ctx.font = font(10.5, 500);
-        var tw = ctx.measureText(it.t).width, avail = it.w - pad * 2 - 7;
+        ctx.font = font(L.fs, 500);
+        var tw = ctx.measureText(it.t).width, avail = it.w - L.pad * 2 - 7;
         if (tw <= avail) {
-          ctx.fillText(it.t, x + pad + 7, y + chipH / 2 + 0.5);
+          ctx.fillText(it.t, x + L.pad + 7, y + L.chipH / 2 + 0.5);
         } else {
-          fitText(ctx, it.t, x + pad + 7 + avail / 2, y + chipH / 2 + 0.5, avail, 1, 10.5);
+          fitText(ctx, it.t, x + L.pad + 7 + avail / 2, y + L.chipH / 2 + 0.5, avail, 1, L.fs);
           ctx.textAlign = 'left';
         }
-        x += it.w + gap;
+        x += it.w + L.gap;
       }
     }
     ctx.textBaseline = 'alphabetic';
@@ -2646,9 +2677,11 @@
     ctx.font = font(25, 500);
     this.wrapCenter(q.q, DW / 2 + shake, lv.expr ? 158 : 152, DW - 40, 32);
 
+    var btns = this.quizButtons();   // 先算按钮：链式关卡里它会决定结论标签是否需要压缩
+
     if (lv.chain) {
       // 链式关卡：前面几步的结论留在屏幕上，后面的步骤要接着用
-      this.drawQuizTrail(qi);
+      this.drawQuizTrail(this.quizTrailCompressed);
     } else {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
@@ -2667,13 +2700,16 @@
       ctx.restore();
     }
 
-    var btns = this.quizButtons();
-    for (var i = 0; i < btns.length; i++) this.drawQuizButton(btns[i], q);
+    var btnBottom = 0;
+    for (var i = 0; i < btns.length; i++) {
+      this.drawQuizButton(btns[i], q);
+      btnBottom = Math.max(btnBottom, btns[i].y + btns[i].h);
+    }
 
     if (this.qWhy) {
       ctx.fillStyle = PAL.wrong;
       ctx.font = font(11.5);
-      this.wrapCenter(this.qWhy, DW / 2, 396, DW - 48, 16);
+      this.wrapCenter(this.qWhy, DW / 2, Math.min(424, Math.max(396, btnBottom + 14)), DW - 48, 16);
     }
   };
 
