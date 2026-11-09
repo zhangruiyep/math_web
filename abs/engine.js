@@ -274,14 +274,14 @@
       note: '化简到最后字母全部抵消，结果是常数 −4——这也是这类题的常见结局'
     },
     /* ---- 章十三：绝对值与数轴距离（拖动 x，分段讨论找最小）---- */
-    // 49. 题1：绝对值 = 到某点的距离（|x−1| 与 |x+2| 什么时候变成 0）
+    // 49. 题1：只给两个点，拖 x 分别算到两点的距离（M 还不登场）
     {
-      ch: 13, kind: 'move', mode: 'visit', ax: [-6, 4], start: 3.4,
+      ch: 13, kind: 'move', mode: 'visit', ax: [-6, 4], start: 3.4, plain: true,
       terms: [{ a: 1, w: 1 }, { a: -2, w: 1 }],
-      expr: 'M = |x − 1| + |x + 2|',
-      task: '把 x 拖到 1 和 −2 各试一次，看看哪一项会变成 0',
+      expr: '数轴上有两个点：1 和 −2',
+      task: '拖动 x，分别算出 x 到 1 和到 −2 的距离',
       targets: [1, -2],
-      ov: { answer: '|x−1| 是 x 到 1 的距离，|x+2| 是 x 到 −2 的距离', note: 'x + 2 其实就是 x − (−2)：到哪个点，绝对值里就减哪个点' }
+      ov: { answer: 'x 到 1 的距离记作 |x−1|，到 −2 的距离记作 |x+2|', note: 'x + 2 其实就是 x − (−2)：到哪个点，绝对值里就减哪个点' }
     },
     // 50. 题2：M 是两段距离之和
     {
@@ -1854,6 +1854,22 @@
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
+
+    /* plain 关（L49）：M 不登场，只看两个距离 */
+    if (lv.plain) {
+      ctx.fillStyle = PAL.ink3;
+      ctx.font = font(12.5);
+      this.wrapCenter(lv.expr, DW / 2, 120, DW - 40, 18);
+      ctx.fillStyle = PAL.ink;
+      ctx.font = font(15, 500);
+      this.wrapCenter(lv.task, DW / 2, 158, DW - 56, 22);
+      var pd = Object.keys(this.visitHit).length;
+      ctx.fillStyle = pd > 0 ? PAL.teal : PAL.ink3;
+      ctx.font = font(12, 500);
+      ctx.fillText('已到达 ' + pd + ' / ' + lv.targets.length, DW / 2, 196);
+      return;
+    }
+
     ctx.fillStyle = PAL.ink3;
     ctx.font = font(11.5);
     this.wrapCenter(lv.expr, DW / 2, 114, DW - 40, 16);
@@ -2079,23 +2095,31 @@
       return;
     }
 
-    /* 项 chips + M chip（宽度不够就缩字号 / 去掉 M） */
+    /* 项 chips（+ M chip；plain 关只显示两个距离） */
     var fs = 11.5, pad = 9, vg = 7;
-    var items = [], i2, wsum = 0;
+    var colsCh = [PAL.teal, PAL.amber, '#7A6BAF'];
+    var items = [], i2;
     for (i2 = 0; i2 < lv.terms.length; i2++) {
       var val = (lv.terms[i2].w || 1) * Math.abs(this.mx - lv.terms[i2].a);
-      items.push({ t: termLabel(lv.terms[i2]) + ' = ' + fmt(val), hit: Math.abs(val) < 1e-9 });
+      var label = lv.plain
+        ? ('到 ' + fmt(lv.terms[i2].a) + ' 的距离 = ' + fmt(val))
+        : (termLabel(lv.terms[i2]) + ' = ' + fmt(val));
+      items.push({
+        t: label,
+        hit: Math.abs(val) < 1e-9,
+        col: lv.plain && lv.terms.length <= 3 ? colsCh[i2 % 3] : null
+      });
     }
-    var mChip = { t: 'M = ' + fmt(m), hit: atMin };
+    var mChip = lv.plain ? null : { t: 'M = ' + fmt(m), hit: atMin };
     function chipW(t, s) { ctx.font = font(s, 500); return ctx.measureText(t).width + pad * 2; }
     function rowW(withM, s) {
       var w = 0;
       for (var q = 0; q < items.length; q++) w += chipW(items[q].t, s) + (q ? vg : 0);
-      if (withM) w += vg + chipW(mChip.t, s);
+      if (withM && mChip) w += vg + chipW(mChip.t, s);
       return w;
     }
-    while (rowW(true, fs) > DW - 36 && fs > 9) fs -= 0.5;
-    var useM = rowW(true, fs) <= DW - 36;
+    var useM = !!mChip && rowW(true, fs) <= DW - 36;
+    while ((useM ? rowW(true, fs) : rowW(false, fs)) > DW - 36 && fs > 9) fs -= 0.5;
     if (!useM) {
       while (rowW(false, fs) > DW - 36 && fs > 9) fs -= 0.5;
     }
@@ -2109,16 +2133,16 @@
       ctx.fillStyle = items[i2].hit ? PAL.teal : PAL.card;
       ctx.fill();
       if (!items[i2].hit) {
-        ctx.strokeStyle = PAL.rule;
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = items[i2].col || PAL.rule;
+        ctx.lineWidth = items[i2].col ? 1.4 : 1;
         ctx.stroke();
       }
-      ctx.fillStyle = items[i2].hit ? '#FFFFFF' : PAL.ink2;
+      ctx.fillStyle = items[i2].hit ? '#FFFFFF' : (items[i2].col || PAL.ink2);
       ctx.font = font(fs, 500);
       ctx.fillText(items[i2].t, cx + w2 / 2, y + 1);
       cx += w2 + vg;
     }
-    if (useM) {
+    if (useM && mChip) {
       var w3 = chipW(mChip.t, fs);
       rr(ctx, cx, y - 15, w3, 30, 15);
       ctx.fillStyle = atMin ? PAL.teal : PAL.ink;
@@ -2272,7 +2296,7 @@
       foot = lv0.ch === 8 ? '比例不同 · DE 跟着 C 变'
         : (lv0.ch === 9 ? '反过来 · 由 DE 定 C 的位置' : '线段上的动点 · 找不变量');
     } else {
-      foot = lv0.ch === 13 ? '绝对值 = 距离 · 拖动 x，看着 M 变' : '距离相同 · 绝对值相等';
+      foot = lv0.ch === 13 ? (lv0.plain ? '两个定点 · 拖动 x 量一量距离' : '绝对值 = 距离 · 拖动 x，看着 M 变') : '距离相同 · 绝对值相等';
     }
     ctx.fillText(foot, DW / 2, 578);
   };
