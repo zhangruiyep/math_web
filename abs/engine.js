@@ -36,6 +36,7 @@
   var SEG_BRACKET_Y = AXIS.y + 56;           // seg：DE 括号行
   var SEG_CHIP_Y = AXIS.y + 86;              // seg：提示 / 实验记录行
   var SEG_BTN_Y = 250;                       // seg：比例切换按钮（目标区下方空档）
+  var MOVE_CHIP_Y = 445;                     // move：x 下方实时读数 chips 行
   var GHOST_DELAY = 10;                      // 幽灵提示：进关后多少秒才出现
   var GHOST_FADE = 0.8;
 
@@ -52,7 +53,7 @@
     10: '判断符号',
     11: '去绝对值',
     12: '完整化简',
-    13: '新章节（规划中）'
+    13: '绝对值与数轴距离'
   };
   var CH_NUM = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三'];
   var CH_SUB = {
@@ -68,7 +69,7 @@
     10: '先看位置，再定正负',
     11: '负数去绝对值要变号',
     12: '一道题从头做到尾',
-    13: '题型陆续补充'
+    13: '拖动 x，分段讨论找最小'
   };
 
   var LEVELS = [
@@ -272,13 +273,158 @@
       hint: '字母抵消后可能只剩一个数',
       note: '化简到最后字母全部抵消，结果是常数 −4——这也是这类题的常见结局'
     },
-    /* 49. 章十三占位（题型稍后提供） */
-    { ch: 13, placeholder: true }
+    /* ---- 章十三：绝对值与数轴距离（拖动 x，分段讨论找最小）---- */
+    // 49. 题1：绝对值 = 到某点的距离（|x−1| 与 |x+2| 什么时候变成 0）
+    {
+      ch: 13, kind: 'move', mode: 'visit', ax: [-6, 4], start: 3.4,
+      terms: [{ a: 1, w: 1 }, { a: -2, w: 1 }],
+      expr: 'M = |x − 1| + |x + 2|',
+      task: '把 x 拖到 1 和 −2 各试一次，看看哪一项会变成 0',
+      targets: [1, -2],
+      ov: { answer: '|x−1| 是 x 到 1 的距离，|x+2| 是 x 到 −2 的距离', note: 'x + 2 其实就是 x − (−2)：到哪个点，绝对值里就减哪个点' }
+    },
+    // 50. 题2：M 是两段距离之和
+    {
+      ch: 13, kind: 'move', mode: 'explore', need: 3, ax: [-7, 5], start: -4.4,
+      terms: [{ a: 1, w: 1 }, { a: -2, w: 1 }],
+      expr: 'M = |x − 1| + |x + 2|',
+      task: '拖动 x 到 3 个不同位置，每次松手都记下两段距离的和 M',
+      ov: { answer: 'M 就是两段距离之和：x 到 1 ＋ x 到 −2', note: 'x 在 −2 和 1 之间时 M 恒等于 3，跑到两边就越来越大' }
+    },
+    // 51. 题3：x 移动时 M 怎么变——分 3 种情况讨论
+    {
+      ch: 13, kind: 'quiz', chain: true, pts: { '\u22122': -2, '1': 1 },
+      expr: 'M = |x + 2| + |x − 1|',
+      qs: [
+        { q: 'x 在 −2 左边（x ＜ −2）时，M = ？', opts: ['2x + 1', '−2x − 1', '3'], ans: 1, done: 'x ＜ −2：M = −2x − 1，越走越大', why: '两项都取相反数：−(x+2) + (1−x) = −2x − 1' },
+        { q: '−2 ≤ x ≤ 1 时（含 −2 和 1），M = ？', opts: ['−2x − 1', '2x + 1', '3'], ans: 2, done: '−2 ≤ x ≤ 1：M = 3，不变', why: '(x+2) + (1−x) = 3，x 正好抵消了' },
+        { q: 'x 在 1 右边（x ＞ 1）时，M = ？', opts: ['3', '2x + 1', '−2x − 1'], ans: 1, done: 'x ＞ 1：M = 2x + 1，越走越大', why: '两项都是正的：(x+2) + (x−1) = 2x + 1' },
+        { q: '三段对比，M 最小出现在哪一段？', opts: ['x ＜ −2', 'x ＞ 1', '−2 ≤ x ≤ 1'], ans: 2, done: 'M 最小 = 3，在 [−2, 1] 上不变', why: '两侧都越走越大，只有中间段是常数 3' }
+      ],
+      result: 'M 最小 = 3（−2 ≤ x ≤ 1）',
+      hint: '先看 x 落在哪一段，再决定两项是变号还是原样',
+      note: '中间段里 x 抵消、M 变成常数——最小值就藏在这段'
+    },
+    // 52. 题4：M 的最小值
+    {
+      ch: 13, kind: 'move', mode: 'min', ax: [-7, 5], start: -5.6,
+      terms: [{ a: -2, w: 1 }, { a: 1, w: 1 }],
+      expr: 'M = |x + 2| + |x − 1|',
+      task: '拖动 x，把 M 降到最小',
+      ov: { answer: 'M 最小 = 3，x 取 −2 到 1 之间（含端点）都行', note: '两段距离至少要铺满 −2 到 1 这段路：3 = 1 − (−2)' }
+    },
+    // 53-55. 题5：换点推广（3 组不同的值）
+    {
+      ch: 13, kind: 'move', mode: 'min', ax: [-9, 7], start: 5.8,
+      terms: [{ a: -5, w: 1 }, { a: 3, w: 1 }],
+      expr: 'M = |x + 5| + |x − 3|',
+      task: '换两个点（−5 和 3）：M 最小是多少？',
+      ov: { answer: 'M 最小 = 8，x 取 [−5, 3] 都行', note: '最小值 = 右点 − 左点 = 3 − (−5) = 8' }
+    },
+    {
+      ch: 13, kind: 'move', mode: 'min', ax: [-7, 3], start: 1.6,
+      terms: [{ a: -3, w: 1 }, { a: -1, w: 1 }],
+      expr: 'M = |x + 3| + |x + 1|',
+      task: '两个点都搬到 0 左边：再求一次最小',
+      ov: { answer: 'M 最小 = 2，x 取 [−3, −1] 都行', note: '右点 − 左点 = −1 − (−3) = 2，跟正负号无关' }
+    },
+    {
+      ch: 13, kind: 'move', mode: 'min', ax: [-3, 9], start: 7.4,
+      terms: [{ a: 0, w: 1 }, { a: 4, w: 1 }],
+      expr: 'M = |x| + |x − 4|',
+      task: '一个点落在原点：M 最小是多少？',
+      ov: { answer: 'M 最小 = 4，x 取 [0, 4] 都行', note: '|x| 就是 x 到 0 的距离——规律不变：右 − 左 = 4' }
+    },
+    // 56. 题6：加权 |x−1| + 2|x−2|
+    {
+      ch: 13, kind: 'move', mode: 'min', ax: [-2, 6], start: -0.8,
+      terms: [{ a: 1, w: 1 }, { a: 2, w: 2 }],
+      expr: 'M = |x − 1| + 2|x − 2|',
+      task: 'x 到 2 的距离要按 2 倍算：找 M 的最小值',
+      ov: { answer: 'M 最小 = 1，此时 x = 2', note: '系数大的点更「重」，最小位置会偏向它：这次 x 停在 2' }
+    },
+    // 57. 题7：三项加权 1、2、3
+    {
+      ch: 13, kind: 'move', mode: 'min', ax: [-1, 6], start: 0.4,
+      terms: [{ a: 1, w: 1 }, { a: 2, w: 2 }, { a: 3, w: 3 }],
+      expr: 'M = |x − 1| + 2|x − 2| + 3|x − 3|',
+      task: '三个点，系数 1、2、3：M 最小时 x 是多少？',
+      ov: { answer: 'M 最小 = 4，x 取 2 到 3 之间都行', note: '在 [2, 3] 上 x 每右移一点，左边多 3、右边少 3，M 不变' }
+    },
+    // 58. 题8：系数一路加到 13
+    {
+      ch: 13, kind: 'move', mode: 'min', ax: [-1, 15], start: 2.8,
+      terms: [
+        { a: 1, w: 1 }, { a: 2, w: 2 }, { a: 3, w: 3 }, { a: 4, w: 4 }, { a: 5, w: 5 },
+        { a: 6, w: 6 }, { a: 7, w: 7 }, { a: 8, w: 8 }, { a: 9, w: 9 }, { a: 10, w: 10 },
+        { a: 11, w: 11 }, { a: 12, w: 12 }, { a: 13, w: 13 }
+      ],
+      expr: 'M = |x−1| + 2|x−2| + 3|x−3| + … + 13|x−13|',
+      task: '系数一路加到 13：M 最小时 x 是多少？',
+      ov: { answer: 'M 最小 = 239，此时 x = 10', note: '总权重 91：累计到 45 还没过半，到第 10 个点过了半——最小就停在 10' }
+    },
+    // 59. 题8 扩展：系数一路加到 20
+    {
+      ch: 13, kind: 'move', mode: 'min', ax: [-2, 23], start: 4.8,
+      terms: [
+        { a: 1, w: 1 }, { a: 2, w: 2 }, { a: 3, w: 3 }, { a: 4, w: 4 }, { a: 5, w: 5 },
+        { a: 6, w: 6 }, { a: 7, w: 7 }, { a: 8, w: 8 }, { a: 9, w: 9 }, { a: 10, w: 10 },
+        { a: 11, w: 11 }, { a: 12, w: 12 }, { a: 13, w: 13 }, { a: 14, w: 14 }, { a: 15, w: 15 },
+        { a: 16, w: 16 }, { a: 17, w: 17 }, { a: 18, w: 18 }, { a: 19, w: 19 }, { a: 20, w: 20 }
+      ],
+      expr: 'M = |x−1| + 2|x−2| + 3|x−3| + … + 20|x−20|',
+      task: '更大一步：系数一直加到 20，M 最小是多少？',
+      ov: { answer: 'M 最小 = 840，x 取 14 到 15 都行', note: '总权重 210，累计到第 14 个点正好过半，从 14 到 15 都是最小' }
+    },
+    // 60. 总结：规律与通用做题步骤
+    {
+      ch: 13, kind: 'quiz', chain: true, pts: { '\u22122': -2, '1': 1 },
+      expr: '总结：距离和 M 的规律',
+      qs: [
+        { q: 'M = |x − a| + |x − b|（a ＜ b），M 最小 = ？', opts: ['b − a', 'a − b', '0'], ans: 0, done: '两点：M最小 = b − a，x 取 [a, b] 都行', why: '两段距离至少要铺满 a 到 b 这段路' },
+        { q: '改成 |x − a| + 2|x − b| 后，最小位置会？', opts: ['偏向 b（系数大的点）', '偏向 a（系数小的点）', '还在正中间'], ans: 0, done: '加权：最小点偏向系数大的一侧', why: '系数大的一侧「每一步代价更高」，x 停过去更划算' },
+        { q: '系数是 1, 2, 3, … 时，最小位置在？', opts: ['累计系数刚好过总权重一半的那个点', '永远是最右边那个点'], ans: 0, done: '找「权重过半」的点：加权中位数', why: '过了这个点，往右每一步的代价都超过左边省下的' },
+        { q: '这类题的通用做题步骤是？', opts: ['定分段 → 去绝对值 → 逐段算 M → 取最小', '直接取中点就是答案'], ans: 0, done: '分段 → 去绝对值 → 逐段算 → 取最小', why: '分段讨论是基本功：每段去完绝对值再找最小的那段' }
+      ],
+      result: '绝对值 = 距离 · 分段讨论 · 找权重过半的点',
+      hint: '把前面每一关的结论串起来',
+      note: '从 |x−1| 到 13 项加权和：所有题都是同一条路——分段、去绝对值、找最小'
+    }
   ];
 
   function unit() { return (AXIS.x1 - AXIS.x0); }
   function snap(v) { return Math.round(v * 2) / 2; }
   function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+
+  /* ---------- 章十三：M = Σ w·|x − a| ---------- */
+  function moveM(terms, x) {
+    var m = 0;
+    for (var i = 0; i < terms.length; i++) m += (terms[i].w || 1) * Math.abs(x - terms[i].a);
+    return m;
+  }
+  /* 加权中位数：M 最小的位置（可能是闭区间 [lo, hi]） */
+  function moveMinInfo(terms) {
+    var pts = terms.slice().sort(function (p, q) { return p.a - q.a; });
+    var total = 0, i;
+    for (i = 0; i < pts.length; i++) total += (pts[i].w || 1);
+    var half = total / 2, cum = 0;
+    for (i = 0; i < pts.length; i++) {
+      cum += (pts[i].w || 1);
+      if (cum >= half - 1e-9) {
+        if (Math.abs(cum - half) < 1e-9 && i + 1 < pts.length) {
+          return { lo: pts[i].a, hi: pts[i + 1].a };
+        }
+        return { lo: pts[i].a, hi: pts[i].a };
+      }
+    }
+    return { lo: pts[pts.length - 1].a, hi: pts[pts.length - 1].a };
+  }
+  /* 单项显示：|x−1| / |x+2| / 2·|x−2| */
+  function termLabel(t) {
+    var a = t.a, w = t.w || 1;
+    var inner = a >= 0 ? ('x \u2212 ' + fmt(a)) : (a === -1 ? 'x + 1' : 'x + ' + fmt(-a));
+    return (w === 1 ? '' : w + '\u00B7') + '|' + inner + '|';
+  }
 
   /* 按章切分关卡：返回 [{ch, from, to}] */
   function chapterGroups() {
@@ -390,6 +536,7 @@
   BoundGame.prototype.level = function () { return LEVELS[this.index]; };
   BoundGame.prototype.isSeg = function () { return this.level().kind === 'seg'; };
   BoundGame.prototype.isQuiz = function () { return this.level().kind === 'quiz'; };
+  BoundGame.prototype.isMove = function () { return this.level().kind === 'move'; };
 
   /* ---------- 坐标映射：数值范围随关卡切换 ---------- */
   BoundGame.prototype.setAxisRange = function () {
@@ -412,6 +559,9 @@
       var pad = Math.max(1.6, (mx - mn) * 0.2);
       this.axMin = mn - pad;
       this.axMax = mx + pad;
+    } else if (lv.kind === 'move') {
+      this.axMin = lv.ax[0];
+      this.axMax = lv.ax[1];
     } else {
       this.axMin = -10;
       this.axMax = 10;
@@ -456,6 +606,16 @@
       this.qFlash = null;
       this.qWhy = '';
       this.quizNextAt = 0;
+    } else if (lv.kind === 'move') {
+      this.mx = lv.start;
+      this.records = [];
+      this.visitHit = {};
+      if (lv.mode === 'min') {
+        var mi = moveMinInfo(lv.terms);
+        this.minLo = mi.lo;
+        this.minHi = mi.hi;
+        this.minM = moveM(lv.terms, mi.lo);
+      }
     } else {
       var park = [8, -8];
       for (var k = 0; k < lv.sol.length; k++) {
@@ -605,6 +765,7 @@
 
     if (this.isQuiz()) this.pointerQuiz(type, p);
     else if (this.isSeg()) this.pointerSeg(type, p);
+    else if (this.isMove()) this.pointerMoveKind(type, p);
     else this.pointerDist(type, p);
   };
 
@@ -797,6 +958,72 @@
     if (Math.abs(val - lv.target.v) < 0.35) this.solve();
   };
 
+  /* ---------- 场景四：章十三，数轴上拖动 x 观察 M ---------- */
+  BoundGame.prototype.moveMval = function () {
+    return moveM(this.level().terms, this.mx);
+  };
+
+  BoundGame.prototype.pointerMoveKind = function (type, p) {
+    if (type === 'down') {
+      if (Math.abs(this.vx(this.mx) - p.x) < 46 || Math.abs(p.y - AXIS.y) < 95) {
+        this.dragging = 0;
+        this.drags++;
+        this.moveX(p.x);
+      }
+    } else if (type === 'move') {
+      if (this.dragging === 0) this.moveX(p.x);
+    } else if (type === 'up') {
+      if (this.dragging === 0) {
+        this.dragging = -1;
+        this.checkMove();
+      }
+    }
+  };
+
+  /* x 按 0.2 一格移动；靠近关键点直接吸附到点上 */
+  BoundGame.prototype.moveX = function (px) {
+    var lv = this.level();
+    var v = clamp(this.xv(px), lv.ax[0], lv.ax[1]);
+    v = Math.round(v * 5) / 5;
+    for (var i = 0; i < lv.terms.length; i++) {
+      var a = lv.terms[i].a;
+      var gap = Math.abs(v - a);
+      if (gap > 1e-9 && gap < 0.3) v = a;
+    }
+    if (v !== this.mx) {
+      this.mx = v;
+      this.everDragged = true;
+      tone(540 + v * 6, 0.04, 0.018);
+    }
+  };
+
+  BoundGame.prototype.checkMove = function () {
+    var lv = this.level();
+    if (lv.mode === 'min') {
+      if (Math.abs(this.moveMval() - this.minM) < 1e-6) this.solve();
+      return;
+    }
+    if (lv.mode === 'visit') {
+      var got = false;
+      for (var i = 0; i < lv.targets.length; i++) {
+        if (Math.abs(this.mx - lv.targets[i]) < 1e-9 && !this.visitHit[i]) {
+          this.visitHit[i] = true;
+          got = true;
+        }
+      }
+      if (Object.keys(this.visitHit).length >= lv.targets.length) this.solve();
+      else if (got) tone(700, 0.08, 0.03);
+      return;
+    }
+    /* explore：记录 3 个相距至少 1 的位置 */
+    var last = this.records[this.records.length - 1];
+    if (!last || Math.abs(this.mx - last.x) >= 1) {
+      this.records.push({ x: this.mx, m: this.moveMval() });
+      tone(700, 0.09, 0.035);
+    }
+    if (this.records.length >= lv.need) this.solve();
+  };
+
   BoundGame.prototype.solve = function () {
     if (this.solved) return;
     this.solved = true;
@@ -866,13 +1093,12 @@
 
   BoundGame.prototype.advance = function () {
     var next = this.index + 1;
-    // 跳过占位关：后面没有内容就回选关页
-    if (next < LEVELS.length && LEVELS[next].placeholder) {
+    // 最后一关 / 占位关：回选关页
+    if (next >= LEVELS.length || LEVELS[next].placeholder) {
       this.mode = 'menu';
       return;
     }
-    if (next >= LEVELS.length) this.loadLevel(0);
-    else this.loadLevel(next);
+    this.loadLevel(next);
   };
 
   BoundGame.prototype.update = function (dt) {
@@ -934,6 +1160,10 @@
     if (this.isQuiz()) {
       this.drawGoalQuiz();
       this.drawAxisQuiz();
+    } else if (this.isMove()) {
+      this.drawGoalMove();
+      this.drawAxisMove();
+      this.drawChipsMove();
     } else if (this.isSeg()) {
       this.drawGoalSeg();
       this.drawAxisSeg();
@@ -1603,7 +1833,302 @@
     ctx.lineJoin = 'miter';
   };
 
-  /* ---------- 场景二：提示 / 实验记录 / 比例按钮 ---------- */
+  /* ---------- 场景四：目标区（章十三）---------- */
+  BoundGame.prototype.drawGoalMove = function () {
+    var ctx = this.ctx;
+    var lv = this.level();
+    var label = lv.mode === 'min' ? '挑战目标' : '实验目标';
+
+    ctx.font = font(12.5);
+    var lw = ctx.measureText(label).width;
+    var total = 20 + 8 + lw;
+    var x = DW / 2 - total / 2;
+    var cy = 92;
+
+    drawTargetIcon(ctx, x, cy);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = PAL.ink3;
+    ctx.font = font(12.5);
+    ctx.fillText(label, x + 28, cy + 1);
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = PAL.ink3;
+    ctx.font = font(11.5);
+    this.wrapCenter(lv.expr, DW / 2, 114, DW - 40, 16);
+
+    var m = this.moveMval();
+    var atMin = lv.mode === 'min' && Math.abs(m - this.minM) < 1e-6;
+    ctx.fillStyle = atMin ? PAL.teal : PAL.ink;
+    ctx.font = font(44, 500);
+    ctx.fillText(fmt(m), DW / 2, 152);
+
+    ctx.fillStyle = PAL.ink2;
+    ctx.font = font(12.5);
+    this.wrapCenter(lv.task, DW / 2, 180, DW - 56, 19);
+
+    var prog = '', progDone = 0;
+    if (lv.mode === 'visit') {
+      progDone = Object.keys(this.visitHit).length;
+      prog = '已到达 ' + progDone + ' / ' + lv.targets.length;
+    } else if (lv.mode === 'explore') {
+      progDone = this.records.length;
+      prog = '已记录 ' + progDone + ' / ' + lv.need;
+    } else {
+      prog = 'x = ' + fmt(this.mx) + '　　M = ' + fmt(m);
+    }
+    ctx.fillStyle = lv.mode === 'min' ? PAL.ink2 : (progDone > 0 ? PAL.teal : PAL.ink3);
+    ctx.font = font(12, 500);
+    ctx.fillText(prog, DW / 2, 206);
+  };
+
+  /* ---------- 场景四：数轴（章十三）---------- */
+  BoundGame.prototype.drawAxisMove = function () {
+    var ctx = this.ctx;
+    var y = AXIS.y;
+    var lv = this.level();
+
+    ctx.strokeStyle = PAL.axis;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(AXIS.x0 - 10, y);
+    ctx.lineTo(AXIS.x1 + 10, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(AXIS.x0 - 10, y);
+    ctx.lineTo(AXIS.x0 - 2, y - 4);
+    ctx.moveTo(AXIS.x0 - 10, y);
+    ctx.lineTo(AXIS.x0 - 2, y + 4);
+    ctx.moveTo(AXIS.x1 + 10, y);
+    ctx.lineTo(AXIS.x1 + 2, y - 4);
+    ctx.moveTo(AXIS.x1 + 10, y);
+    ctx.lineTo(AXIS.x1 + 2, y + 4);
+    ctx.stroke();
+
+    /* 整数刻度 */
+    var v0 = Math.ceil(lv.ax[0] - 1e-9), v1 = Math.floor(lv.ax[1] + 1e-9);
+    var labelStep = (v1 - v0) > 16 ? 5 : 2;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    for (var v = v0; v <= v1; v++) {
+      var x = this.vx(v);
+      var zero = v === 0;
+      ctx.strokeStyle = zero ? PAL.ink2 : PAL.rule;
+      ctx.lineWidth = zero ? 1.6 : 1;
+      ctx.beginPath();
+      ctx.moveTo(x, y + 2);
+      ctx.lineTo(x, y + (v % labelStep === 0 ? 10 : 6));
+      ctx.stroke();
+      if (v % labelStep === 0) {
+        ctx.fillStyle = zero ? PAL.ink2 : PAL.ink3;
+        ctx.font = font(10.5);
+        ctx.fillText(fmt(v), x, y + 26);
+      }
+    }
+
+    /* x 到各点的距离段（系数越大越粗） */
+    var hx = this.vx(this.mx);
+    var cols = [PAL.teal, PAL.amber, '#7A6BAF'];
+    var few = lv.terms.length <= 3;
+    for (var i = 0; i < lv.terms.length; i++) {
+      var px = this.vx(lv.terms[i].a);
+      if (Math.abs(px - hx) <= 1) continue;
+      var wgt = lv.terms[i].w || 1;
+      ctx.strokeStyle = few ? cols[i % 3] : PAL.ghost;
+      ctx.lineWidth = few ? Math.min(7, 2.5 + wgt * 1.1) : 1.6;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(Math.min(px, hx), y);
+      ctx.lineTo(Math.max(px, hx), y);
+      ctx.stroke();
+      ctx.lineCap = 'butt';
+    }
+
+    /* 各点标记 + 数值 */
+    var ptStep = lv.terms.length > 13 ? 2 : 1;
+    for (var j = 0; j < lv.terms.length; j++) {
+      var a = lv.terms[j].a;
+      var axp = this.vx(a);
+      ctx.beginPath();
+      ctx.arc(axp, y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = PAL.amber;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(axp, y, 6, 0, Math.PI * 2);
+      ctx.strokeStyle = PAL.card;
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+      if (a % ptStep === 0) {
+        ctx.fillStyle = PAL.amber;
+        ctx.font = font(10, 500);
+        ctx.fillText(fmt(a), axp, y + 38);
+      }
+    }
+
+    /* visit 模式：还没到达的目标点画虚线圈 */
+    if (lv.mode === 'visit') {
+      for (var t2 = 0; t2 < lv.targets.length; t2++) {
+        if (this.visitHit[t2]) continue;
+        var tx = this.vx(lv.targets[t2]);
+        ctx.setLineDash([3, 4]);
+        ctx.strokeStyle = PAL.teal;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.arc(tx, y, 13, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
+    /* min 模式：停留久了提示最小位置（幽灵圈） */
+    var ghostA = clamp((this.t - this.levelStartAt - GHOST_DELAY) / GHOST_FADE, 0, 1);
+    if (lv.mode === 'min' && ghostA > 0 && !this.solved) {
+      ctx.save();
+      ctx.globalAlpha = ghostA;
+      ctx.setLineDash([3, 4]);
+      ctx.strokeStyle = PAL.ghost;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(this.vx(this.minLo), y, 16, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(this.vx(this.minLo), y, 2.4, 0, Math.PI * 2);
+      ctx.fillStyle = PAL.ghost;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    /* x 手柄 */
+    if (!this.everDragged) {
+      var off = 26 + Math.sin(this.t * 2.6) * 1.6;
+      ctx.strokeStyle = PAL.ink3;
+      ctx.lineWidth = 1.6;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      if (hx - off > AXIS.x0 + 2) drawChevron(ctx, hx - off, y, -1);
+      if (hx + off < AXIS.x1 - 2) drawChevron(ctx, hx + off, y, 1);
+      ctx.lineCap = 'butt';
+      ctx.lineJoin = 'miter';
+    }
+    var active = this.dragging === 0;
+    ctx.beginPath();
+    ctx.arc(hx, y, active ? 18 : 16, 0, Math.PI * 2);
+    ctx.fillStyle = PAL.card;
+    ctx.fill();
+    ctx.lineWidth = 2.4;
+    ctx.strokeStyle = PAL.ink;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(hx, y, 4.5, 0, Math.PI * 2);
+    ctx.fillStyle = PAL.ink;
+    ctx.fill();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = PAL.ink;
+    ctx.font = font(12.5, 500);
+    ctx.fillText('x', hx, y - 22);
+  };
+
+  /* ---------- 场景四：x 下方的实时读数 / 记录条 ---------- */
+  BoundGame.prototype.drawChipsMove = function () {
+    var ctx = this.ctx;
+    var lv = this.level();
+    var y = MOVE_CHIP_Y;
+    var m = this.moveMval();
+    var atMin = lv.mode === 'min' && Math.abs(m - this.minM) < 1e-6;
+
+    if (lv.mode === 'explore') {
+      var chips = this.records.slice(-3);
+      var cw = 118, chh = 40, gap = 8;
+      var total = chips.length * cw + (chips.length - 1) * gap;
+      var x0 = DW / 2 - total / 2;
+      for (var i = 0; i < chips.length; i++) {
+        var r = chips[i];
+        var x = x0 + i * (cw + gap);
+        rr(ctx, x, y - 20, cw, chh, 9);
+        ctx.fillStyle = PAL.card;
+        ctx.fill();
+        ctx.strokeStyle = PAL.rule;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = PAL.ink3;
+        ctx.font = font(10);
+        ctx.fillText('x = ' + fmt(r.x), x + cw / 2, y - 6);
+        ctx.fillStyle = PAL.teal;
+        ctx.font = font(12, 500);
+        ctx.fillText('M = ' + fmt(r.m), x + cw / 2, y + 12);
+      }
+      return;
+    }
+
+    if (lv.terms.length > 3) {
+      var xt = 'x = ' + fmt(this.mx);
+      ctx.font = font(12, 500);
+      var tw = ctx.measureText(xt).width;
+      rr(ctx, DW / 2 - tw / 2 - 10, y - 14, tw + 20, 28, 14);
+      ctx.fillStyle = PAL.card;
+      ctx.fill();
+      ctx.strokeStyle = PAL.rule;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = PAL.ink2;
+      ctx.fillText(xt, DW / 2, y + 4);
+      return;
+    }
+
+    /* 项 chips + M chip（宽度不够就缩字号 / 去掉 M） */
+    var fs = 11.5, pad = 9, vg = 7;
+    var items = [], i2, wsum = 0;
+    for (i2 = 0; i2 < lv.terms.length; i2++) {
+      var val = (lv.terms[i2].w || 1) * Math.abs(this.mx - lv.terms[i2].a);
+      items.push({ t: termLabel(lv.terms[i2]) + ' = ' + fmt(val), hit: Math.abs(val) < 1e-9 });
+    }
+    var mChip = { t: 'M = ' + fmt(m), hit: atMin };
+    function chipW(t, s) { ctx.font = font(s, 500); return ctx.measureText(t).width + pad * 2; }
+    function rowW(withM, s) {
+      var w = 0;
+      for (var q = 0; q < items.length; q++) w += chipW(items[q].t, s) + (q ? vg : 0);
+      if (withM) w += vg + chipW(mChip.t, s);
+      return w;
+    }
+    while (rowW(true, fs) > DW - 36 && fs > 9) fs -= 0.5;
+    var useM = rowW(true, fs) <= DW - 36;
+    if (!useM) {
+      while (rowW(false, fs) > DW - 36 && fs > 9) fs -= 0.5;
+    }
+    var totW = rowW(useM, fs);
+    var cx = DW / 2 - totW / 2;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (i2 = 0; i2 < items.length; i2++) {
+      var w2 = chipW(items[i2].t, fs);
+      rr(ctx, cx, y - 15, w2, 30, 15);
+      ctx.fillStyle = items[i2].hit ? PAL.teal : PAL.card;
+      ctx.fill();
+      if (!items[i2].hit) {
+        ctx.strokeStyle = PAL.rule;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+      ctx.fillStyle = items[i2].hit ? '#FFFFFF' : PAL.ink2;
+      ctx.font = font(fs, 500);
+      ctx.fillText(items[i2].t, cx + w2 / 2, y + 1);
+      cx += w2 + vg;
+    }
+    if (useM) {
+      var w3 = chipW(mChip.t, fs);
+      rr(ctx, cx, y - 15, w3, 30, 15);
+      ctx.fillStyle = atMin ? PAL.teal : PAL.ink;
+      ctx.fill();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = font(fs, 500);
+      ctx.fillText(mChip.t, cx + w3 / 2, y + 1);
+    }
+  };
+
   BoundGame.prototype.drawFootSeg = function () {
     var ctx = this.ctx;
     var lv = this.level();
@@ -1739,21 +2264,22 @@
       var hintDue = lv0.hint && (this.t - this.levelStartAt) > GHOST_DELAY;
       if (lv0.chain && this.quizQi > 0 && hintDue) {
         foot = '提示：' + lv0.hint;   // 结论行占用了题目下方，提示挪到底部
-      } else if (lv0.ch === 10) foot = '定符号 · 看左右、看谁离 0 更远';
+      } else if (lv0.ch === 13) foot = '绝对值 = 距离 · 分段讨论找最小';
+      else if (lv0.ch === 10) foot = '定符号 · 看左右、看谁离 0 更远';
       else if (lv0.ch === 11) foot = '去绝对值 · 里面是负的就整体变号';
       else foot = '定符号 → 去绝对值 → 合并同类项';
     } else if (this.isSeg()) {
       foot = lv0.ch === 8 ? '比例不同 · DE 跟着 C 变'
         : (lv0.ch === 9 ? '反过来 · 由 DE 定 C 的位置' : '线段上的动点 · 找不变量');
     } else {
-      foot = '距离相同 · 绝对值相等';
+      foot = lv0.ch === 13 ? '绝对值 = 距离 · 拖动 x，看着 M 变' : '距离相同 · 绝对值相等';
     }
     ctx.fillText(foot, DW / 2, 578);
   };
 
   BoundGame.prototype.drawHandles = function () {
     var ctx = this.ctx;
-    if (this.isQuiz()) return;
+    if (this.isQuiz() || this.isMove()) return;
     if (this.isSeg()) { this.drawHandlesSeg(); return; }
     var lv = this.level();
 
@@ -2149,6 +2675,10 @@
   BoundGame.prototype.overlayText = function () {
     var lv = this.level();
 
+    if (lv.kind === 'move') {
+      return { answer: lv.ov.answer, note: lv.ov.note };
+    }
+
     if (lv.kind === 'quiz') {
       return {
         answer: lv.result ? ('原式 = ' + lv.result) : ('全部答对 · ' + lv.qs.length + ' 步'),
@@ -2291,7 +2821,7 @@
     ctx.fill();
     ctx.fillStyle = '#FFFDF8';
     ctx.font = font(14, 500);
-    ctx.fillText(this.index + 1 >= LEVELS.length ? '再来一轮' : '继续', DW / 2, y + h - 30);
+    ctx.fillText(this.index + 1 >= LEVELS.length ? '完成' : '继续', DW / 2, y + h - 30);
 
     // 选关入口（点这里回章节目录）
     ctx.textAlign = 'center';
@@ -2363,6 +2893,25 @@
   /* 测试钩子：三种场景都用它直接通关 */
   BoundGame.prototype.autoSolve = function () {
     var lv = this.level();
+    if (lv.kind === 'move') {
+      if (lv.mode === 'visit') {
+        for (var vi = 0; vi < lv.targets.length; vi++) this.visitHit[vi] = true;
+        this.mx = lv.targets[0];
+        this.solve();
+      } else if (lv.mode === 'explore') {
+        for (var ei = 0; ei < lv.need; ei++) {
+          var vx2 = clamp(lv.ax[0] + 1.5 + ei * 3, lv.ax[0], lv.ax[1]);
+          this.mx = Math.round(vx2 * 5) / 5;
+          this.records.push({ x: this.mx, m: this.moveMval() });
+        }
+        this.solve();
+      } else {
+        this.mx = this.minLo;
+        this.everDragged = true;
+        this.checkMove();
+      }
+      return;
+    }
     if (lv.kind === 'quiz') {
       this.quizQi = lv.qs.length - 1;
       this.qFlash = { ok: true, at: this.t, i: lv.qs[lv.qs.length - 1].ans };
