@@ -51,9 +51,10 @@
     9: '由 DE 反推 C',
     10: '判断符号',
     11: '去绝对值',
-    12: '完整化简'
+    12: '完整化简',
+    13: '新章节（规划中）'
   };
-  var CH_NUM = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
+  var CH_NUM = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三'];
   var CH_SUB = {
     1: '距离相同，左右各一个',
     2: '锚点换个位置再看',
@@ -66,7 +67,8 @@
     9: '给定 DE，找出 C 在哪',
     10: '先看位置，再定正负',
     11: '负数去绝对值要变号',
-    12: '一道题从头做到尾'
+    12: '一道题从头做到尾',
+    13: '题型陆续补充'
   };
 
   var LEVELS = [
@@ -269,7 +271,9 @@
       ],
       hint: '字母抵消后可能只剩一个数',
       note: '化简到最后字母全部抵消，结果是常数 −4——这也是这类题的常见结局'
-    }
+    },
+    /* 49. 章十三占位（题型稍后提供） */
+    { ch: 13, placeholder: true }
   ];
 
   function unit() { return (AXIS.x1 - AXIS.x0); }
@@ -423,6 +427,7 @@
   BoundGame.prototype.loadLevel = function (i) {
     this.index = clamp(i, 0, LEVELS.length - 1);
     var lv = LEVELS[this.index];
+    if (lv.placeholder) { this.mode = 'menu'; return; }
     this.setAxisRange();
 
     this.handles = [];
@@ -606,7 +611,9 @@
   /* ---------- 选关页 ---------- */
   BoundGame.prototype.menuRows = function () {
     var groups = chapterGroups();
-    var w = (DW - 52 - 10) / 2, h = 64, gx = 10, gy = 10, y0 = 122;
+    // 章多时压缩行高，避免最后一行压到底部文字
+    var dense = groups.length > 12;
+    var w = (DW - 52 - 10) / 2, h = dense ? 58 : 64, gx = 10, gy = dense ? 8 : 10, y0 = dense ? 112 : 122;
     var out = [];
     for (var i = 0; i < groups.length; i++) {
       out.push({
@@ -641,6 +648,11 @@
     this.pressed = -1;
     this.resetAt = -1;
     if (hit >= 0 && hit === was) {
+      if (LEVELS[rows[hit].from] && LEVELS[rows[hit].from].placeholder) {
+        tone(300, 0.08, 0.03);
+        this.menuHintAt = this.t;
+        return;
+      }
       tone(700, 0.1, 0.04);
       this.loadLevel(rows[hit].from);
       return;
@@ -853,8 +865,14 @@
   };
 
   BoundGame.prototype.advance = function () {
-    if (this.index + 1 >= LEVELS.length) this.loadLevel(0);
-    else this.loadLevel(this.index + 1);
+    var next = this.index + 1;
+    // 跳过占位关：后面没有内容就回选关页
+    if (next < LEVELS.length && LEVELS[next].placeholder) {
+      this.mode = 'menu';
+      return;
+    }
+    if (next >= LEVELS.length) this.loadLevel(0);
+    else this.loadLevel(next);
   };
 
   BoundGame.prototype.update = function (dt) {
@@ -889,6 +907,25 @@
 
     if (this.mode === 'menu') {
       this.drawMenu();
+      ctx.restore();
+      return;
+    }
+
+    if (LEVELS[this.index] && LEVELS[this.index].placeholder) {
+      ctx.fillStyle = PAL.card;
+      rr(ctx, DW / 2 - 120, 280, 240, 110, 16);
+      ctx.fill();
+      ctx.strokeStyle = PAL.rule;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = PAL.ink;
+      ctx.font = font(16, 500);
+      ctx.fillText('章十三 · 建设中', DW / 2, 328);
+      ctx.fillStyle = PAL.ink3;
+      ctx.font = font(11);
+      ctx.fillText('题型马上就来，先玩玩其他章吧', DW / 2, 356);
       ctx.restore();
       return;
     }
@@ -931,12 +968,22 @@
     var rows = this.menuRows();
     for (var i = 0; i < rows.length; i++) this.drawMenuRow(rows[i], i);
 
+    if (this.menuHintAt != null && this.t - this.menuHintAt < 1.6) {
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = PAL.amber;
+      ctx.font = font(11, 500);
+      ctx.fillText('本章建设中，题型马上就来', DW / 2, 118);
+    }
+
+    var totalLv = 0;
+    for (var li2 = 0; li2 < LEVELS.length; li2++) if (!LEVELS[li2].placeholder) totalLv++;
     var doneN = Object.keys(this.done).length;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = PAL.ink3;
     ctx.font = font(10.5);
-    ctx.fillText('共 ' + LEVELS.length + ' 关 · 已通过 ' + doneN + ' 关', DW / 2 - 22, 610);
+    ctx.fillText('共 ' + totalLv + ' 关 · 已通过 ' + doneN + ' 关', DW / 2 - 22, 610);
 
     if (doneN > 0) {
       ctx.textAlign = 'right';
@@ -948,6 +995,7 @@
 
   BoundGame.prototype.drawMenuRow = function (r, i) {
     var ctx = this.ctx;
+    var ph = !!(LEVELS[r.from] && LEVELS[r.from].placeholder);
     var total = r.to - r.from + 1;
     var passed = 0;
     for (var k = r.from; k <= r.to; k++) if (this.done[k]) passed++;
@@ -983,9 +1031,9 @@
     ctx.fillStyle = PAL.ink;
     ctx.fillText(CH_NAME[r.ch], nameX, r.y + 28);
 
-    ctx.fillStyle = passed > 0 ? PAL.teal : PAL.ink3;
+    ctx.fillStyle = ph ? PAL.ghost : (passed > 0 ? PAL.teal : PAL.ink3);
     ctx.font = font(9.5, 500);
-    ctx.fillText(passed > 0 ? '已通过 ' + passed + '/' + total : total + ' 关', nameX, r.y + 46);
+    ctx.fillText(ph ? '建设中' : (passed > 0 ? '已通过 ' + passed + '/' + total : total + ' 关'), nameX, r.y + 46);
   };
 
   /* ---------- 顶部：进度 ---------- */
@@ -1658,6 +1706,7 @@
     var ctx = this.ctx;
     var groups = chapterGroups();
 
+    groups = groups.filter(function (g2) { return !(LEVELS[g2.from] && LEVELS[g2.from].placeholder); });
     var within = 6.5, between = 9, r = 2.4;
     var total = 0;
     for (var g = 0; g < groups.length; g++) {
