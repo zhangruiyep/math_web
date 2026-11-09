@@ -1864,10 +1864,47 @@
       ctx.fillStyle = PAL.ink;
       ctx.font = font(15, 500);
       this.wrapCenter(lv.task, DW / 2, 158, DW - 56, 22);
-      var pd = Object.keys(this.visitHit).length;
-      ctx.fillStyle = pd > 0 ? PAL.teal : PAL.ink3;
+
+      /* 过关条件清单：每个目标点一枚状态 chip，去过变绿打勾 */
+      ctx.textAlign = 'center';
       ctx.font = font(12, 500);
-      ctx.fillText('已到达 ' + pd + ' / ' + lv.targets.length, DW / 2, 196);
+      var cond = [];
+      for (var ti = 0; ti < lv.targets.length; ti++) {
+        cond.push({
+          t: '到 ' + fmt(lv.targets[ti]) + (this.visitHit[ti] ? '　已去过 ✓' : '　还没去过'),
+          hit: !!this.visitHit[ti]
+        });
+      }
+      var padC = 11, vgC = 8, hC = 26;
+      var wsumC = 0, cw = [];
+      for (ti = 0; ti < cond.length; ti++) {
+        cw[ti] = ctx.measureText(cond[ti].t).width + padC * 2;
+        wsumC += cw[ti] + (ti ? vgC : 0);
+      }
+      var cx0 = DW / 2 - wsumC / 2;
+      ctx.textBaseline = 'middle';
+      for (ti = 0; ti < cond.length; ti++) {
+        rr(ctx, cx0, 182, cw[ti], hC, 13);
+        if (cond[ti].hit) {
+          ctx.fillStyle = PAL.teal;
+          ctx.fill();
+          ctx.fillStyle = '#FFFFFF';
+        } else {
+          ctx.fillStyle = PAL.card;
+          ctx.fill();
+          ctx.strokeStyle = PAL.rule;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.fillStyle = PAL.ink3;
+        }
+        ctx.font = font(12, 500);
+        ctx.fillText(cond[ti].t, cx0 + cw[ti] / 2, 182 + hC / 2 + 1);
+        cx0 += cw[ti] + vgC;
+      }
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = PAL.ink3;
+      ctx.font = font(11.5);
+      ctx.fillText('过关条件：两个点都要用 x 拖到过一次', DW / 2, 232);
       return;
     }
 
@@ -1983,18 +2020,31 @@
       }
     }
 
-    /* visit 模式：还没到达的目标点画虚线圈 */
+    /* visit 模式：没到的目标点画虚线圈，已到的画绿色对勾 */
     if (lv.mode === 'visit') {
       for (var t2 = 0; t2 < lv.targets.length; t2++) {
-        if (this.visitHit[t2]) continue;
         var tx = this.vx(lv.targets[t2]);
-        ctx.setLineDash([3, 4]);
-        ctx.strokeStyle = PAL.teal;
-        ctx.lineWidth = 1.4;
-        ctx.beginPath();
-        ctx.arc(tx, y, 13, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
+        if (this.visitHit[t2]) {
+          ctx.strokeStyle = PAL.teal;
+          ctx.lineWidth = 2.4;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.beginPath();
+          ctx.moveTo(tx - 5, y - 30);
+          ctx.lineTo(tx - 1.5, y - 24.5);
+          ctx.lineTo(tx + 5.5, y - 35);
+          ctx.stroke();
+          ctx.lineCap = 'butt';
+          ctx.lineJoin = 'miter';
+        } else {
+          ctx.setLineDash([3, 4]);
+          ctx.strokeStyle = PAL.teal;
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.arc(tx, y, 13, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
       }
     }
 
