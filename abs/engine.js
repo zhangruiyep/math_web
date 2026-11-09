@@ -404,6 +404,19 @@
       result: '绝对值 = 距离 · 分段讨论 · 找权重过半的点',
       hint: '把前面每一关的结论串起来',
       note: '从 |x−1| 到 13 项加权和：所有题都是同一条路——分段、去绝对值、找最小'
+    },
+    // 62. 终极挑战：系数按 2 递减（26, 24, …, 2），规则还成立吗
+    {
+      ch: 13, kind: 'quiz', chain: true, ax: [0, 14],
+      extra: [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13], pts: {},
+      expr: 'M = 26|x−1| + 24|x−2| + 22|x−3| + … + 2|x−13|',
+      qs: [
+        { q: '系数 26, 24, …, 2：总权重 = ？', opts: ['182', '156', '208', '91'], ans: 0, done: '总权重 = 182，一半 = 91', why: '26+24+…+2 = 2×(13+12+…+1) = 2×91 = 182' },
+        { q: '从左累加系数，首次超过 91 的点是？', opts: ['x = 3', 'x = 4', 'x = 6', 'x = 7'], ans: 1, done: 'x = 4（累计 72 → 92 跨过 91）', why: '26+24+22 = 72 还不够，再加 20 得 92 ＞ 91，所以停在 x = 4' }
+      ],
+      result: 'x = 4 时 M 最小（M = 478）',
+      hint: '系数变了，规则没变：还是找累计权重过半的点',
+      note: '系数递减只是换了每步的「重量」；总权重 182、一半 91，累计跨过 91 的位置就是最小点'
     }
   ];
 
@@ -2495,13 +2508,15 @@
     var q = lv.qs[Math.min(this.quizQi, lv.qs.length - 1)];
     if (!q) return [];
     var out = [], i;
+    /* 竖排按钮：3 个用 50 行距，4 个收紧到 46，保证整体不顶到数轴 */
+    var vb = q.opts.length >= 4 ? { pitch: 46, h: 40 } : { pitch: 50, h: 42 };
+    var blockH = q.opts.length > 2 ? (q.opts.length - 1) * vb.pitch + vb.h : 58;
     var startY = q.opts.length <= 2 ? 232 : 228;
     this.quizTrailCompressed = false;
     if (lv.chain) {
       /* 结论标签占了几行就给按钮让多少位；放不下就压缩标签 */
       var L = this.quizTrailLayout(false);
       if (L) {
-        var blockH = q.opts.length > 2 ? (q.opts.length - 1) * 50 + 42 : 58;
         var bottom = L.y0 + L.rows.length * L.rowH;
         if (bottom + 12 + blockH > QUIZ_AXIS_Y - 14) {
           L = this.quizTrailLayout(true);
@@ -2511,6 +2526,8 @@
         startY = clamp(bottom + 12, 228, 272);
       }
     }
+    var maxY = Math.max(228, QUIZ_AXIS_Y - 14 - blockH);
+    if (q.opts.length > 2 && startY > maxY) startY = maxY;
     if (q.opts.length <= 2) {
       var w = (DW - 52 - 14) / 2;
       for (i = 0; i < q.opts.length; i++) {
@@ -2518,7 +2535,7 @@
       }
     } else {
       for (i = 0; i < q.opts.length; i++) {
-        out.push({ i: i, x: 26, y: startY + i * 50, w: DW - 52, h: 42 });
+        out.push({ i: i, x: 26, y: startY + i * vb.pitch, w: DW - 52, h: vb.h });
       }
     }
     return out;
