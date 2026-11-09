@@ -730,7 +730,8 @@
     return p.x >= 12 && p.x <= 80 && p.y >= 24 && p.y <= 64;
   };
   BoundGame.prototype.hitOverlayMenu = function (p) {
-    return Math.abs(p.x - DW / 2) <= 52 && p.y >= 466 && p.y <= 504;
+    var selY = 200 + this.overlayCardH() + 30;
+    return Math.abs(p.x - DW / 2) <= 52 && p.y >= selY - 19 && p.y <= selY + 19;
   };
 
   BoundGame.prototype.openMenu = function () {
@@ -2777,6 +2778,16 @@
     return { answer: main, note: note };
   };
 
+  /* 结算卡片高度：按答案/说明实际折行数自适应，避免文字重叠 */
+  BoundGame.prototype.overlayCardH = function () {
+    var ctx = this.ctx;
+    var t = this.overlayText();
+    var a = wrapLines(ctx, t.answer, 300, 14).length;
+    var n = wrapLines(ctx, t.note, 300, 11.5).length;
+    var contentEnd = 156 + a * 18 + 6 + (n - 1) * 16 + 8;
+    return Math.max(256, contentEnd + 56);
+  };
+
   BoundGame.prototype.drawOverlay = function () {
     var ctx = this.ctx;
     var k = clamp((this.t - this.solvedAt) / 0.28, 0, 1);
@@ -2786,7 +2797,7 @@
     ctx.fillStyle = 'rgba(247,243,234,' + (0.9 * ease) + ')';
     ctx.fillRect(0, 0, DW, DH);
 
-    var h = 256;
+    var h = this.overlayCardH();
     var y = 200 + (1 - ease) * 14;
     ctx.globalAlpha = ease;
 
@@ -2834,11 +2845,12 @@
 
     ctx.fillStyle = PAL.ink2;
     ctx.font = font(14, 500);
+    var ansLs = wrapLines(ctx, t.answer, 300, 14);
     this.wrap(t.answer, DW / 2, y + 156, 300, 18);
 
     ctx.fillStyle = PAL.ink3;
     ctx.font = font(11.5);
-    this.wrap(t.note, DW / 2, y + 180, 300, 16);
+    this.wrap(t.note, DW / 2, y + 156 + ansLs.length * 18 + 6, 300, 16);
 
     rr(ctx, DW / 2 - 78, y + h - 56, 156, 40, 20);
     ctx.fillStyle = PAL.ink;
@@ -2847,17 +2859,18 @@
     ctx.font = font(14, 500);
     ctx.fillText(this.index + 1 >= LEVELS.length ? '完成' : '继续', DW / 2, y + h - 30);
 
-    // 选关入口（点这里回章节目录）
+    // 选关入口（点这里回章节目录）：跟随卡片高度，固定在卡片下方 30px
+    var selY = 200 + h + 30;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = PAL.ink3;
     ctx.font = font(11.5);
-    ctx.fillText('选关', DW / 2 + 4, 486);
+    ctx.fillText('选关', DW / 2 + 4, selY);
     ctx.strokeStyle = PAL.ink3;
     ctx.lineWidth = 1.4;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    drawChevron(ctx, DW / 2 - 20, 486, -1);
+    drawChevron(ctx, DW / 2 - 20, selY, -1);
     ctx.lineCap = 'butt';
     ctx.lineJoin = 'miter';
 
